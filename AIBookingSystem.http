@@ -1,0 +1,6 @@
+@AIBookingSystem_HostAddress = http://localhost:5151
+
+GET {{AIBookingSystem_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
