@@ -12,6 +12,3 @@ add the following in program.cs within the if (app.Environment.IsDevelopment()) 
     {
         options.DocumentPath = "/openapi/v1.json";
     });
-
-3. Add Model classes
-4. 
