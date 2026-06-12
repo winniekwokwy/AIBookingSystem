@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Net.Http.Headers;
+
 public class User
 {
-    public int Id;
+    public int Id { get; set;}
     public required string Name {get; set;}
     public required string UserName { get; set;}
     public required string Password { get; set;}
