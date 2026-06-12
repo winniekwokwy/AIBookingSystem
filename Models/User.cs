@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Net.Http.Headers;
+using Microsoft.EntityFrameworkCore;
 
+[Index(nameof(UserName), IsUnique = true)]
 public class User
 {
     public int Id { get; set;}
