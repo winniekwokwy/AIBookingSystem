@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using NodaTime;
 
 public class AccessLog
 {
@@ -8,5 +9,5 @@ public class AccessLog
     [ForeignKey("Id")]
     public required string Status {get; set;}
     public required string Reason {get; set;}
-    public required DateTime AccessedTime { get; set;}
+    public Instant AccessedTime { get; set;} = Instant.FromDateTimeUtc(DateTime.UtcNow);
 }

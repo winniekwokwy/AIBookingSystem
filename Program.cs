@@ -9,7 +9,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<RoomBookingDbContext>(options =>
-    options.UseNpgsql(builder.Configuration["dBConnectionString"]));
+    options.UseNpgsql(builder.Configuration["dBConnectionString"], o => o.UseNodaTime()));
 
 var app = builder.Build();
 

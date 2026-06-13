@@ -2,8 +2,8 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -11,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AIBookingSystem.Migrations
 {
     [DbContext(typeof(RoomBookingDbContext))]
-    partial class RoomBookingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260613180258_ChangedChangeLogTable")]
+    partial class ChangedChangeLogTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,7 +32,7 @@ namespace AIBookingSystem.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<Instant>("AccessedTime")
+                    b.Property<DateTime>("AccessedTime")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Reason")
@@ -96,7 +98,7 @@ namespace AIBookingSystem.Migrations
                     b.Property<int?>("BookingId")
                         .HasColumnType("integer");
 
-                    b.Property<Instant>("ChangedTime")
+                    b.Property<DateTime>("ChangedTime")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("EntityType")

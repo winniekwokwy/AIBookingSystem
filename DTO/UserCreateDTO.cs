@@ -7,15 +7,17 @@ public class UserCreateDTO
     public required string Name {get; set;}
     
     [Required(ErrorMessage = "Username is required.")]
-    [StringLength(100, MinimumLength = 8, ErrorMessage = "Username must be between 8 and 20 characters.")]
+    [RegularExpression("^[a-zA-Z0-9]*$")]
+    [StringLength(20, MinimumLength = 8, ErrorMessage = "Username must be between 8 and 20 characters.")]
     public required string UserName { get; set;}
    
     [Required(ErrorMessage = "Password is required")]
     [DataType(DataType.Password)]
-    [StringLength(100, MinimumLength = 6, ErrorMessage = "Password should be at least 6 characters")]  
+    [RegularExpression("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[^\\s<>]{8,}$")]
+    [StringLength(20, MinimumLength = 8, ErrorMessage = "Password should be at least 8 characters")]  
     public required string Password { get; set;}
     
     [Required(ErrorMessage = "Role is required")]
     public required string Role { get; set;}
-    public string Status {get; set; } = "Active";
+    public required int UserId {get; set;}
 }

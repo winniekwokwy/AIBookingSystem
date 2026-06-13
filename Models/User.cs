@@ -8,7 +8,7 @@ public class User
     public required string UserName { get; set;}
     public required string Password { get; set;}
     public required string Role { get; set;}
-    public required string Status { get; set;} = "Active";
+    public required string Status { get; set;}
     public ICollection<Booking> Bookings { get; set;} = null!;
     public ICollection<ChangeLog> Changes { get; set;} = null!;
     public ICollection<AccessLog> Access { get; set; } = null!;
