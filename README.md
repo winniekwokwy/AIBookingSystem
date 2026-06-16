@@ -33,7 +33,7 @@ dotnet new webapi --use-controllers -o [Project Name]
 
         Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore
 
-    c. Add connection string into Secret Manager Tool
+    c. Add connection string into Secret Manager Tool (https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-10.0&tabs=linux%2Cpowershell)
 
         dotnet user-secrets init
         dotnet user-secrets set "[Name of db connection string]" "Host=localhost;Database=[Database Name];Username=[Username];Password=[Password]"
@@ -52,3 +52,5 @@ dotnet new webapi --use-controllers -o [Project Name]
     For Attribute routing with HTTP verb attributes, refer to https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-10.0#ar6?)
 
     For dependency injection, refer to https://dotnettutorials.net/lesson/dependency-injection-asp-net-core-web-api/
+
+    For returning proper API response, refer to https://codewithmukesh.com/blog/http-status-codes-aspnet-core-api-responses/

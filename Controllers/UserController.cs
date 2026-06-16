@@ -2,13 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AIBookingSystem.Controllers;
 
-//  public required string Name {get; set;}
-//     public required string UserName { get; set;}
-//     public required string Password { get; set;}
-//     public required string Role { get; set;}
-//     public required string Status { get; set;} = "Active";
-//     public ICollection<Booking> Bookings { get; set;} = null!;
-
 [ApiController]
 [Route("api/[controller]/[action]")]
 public class UserController : ControllerBase
