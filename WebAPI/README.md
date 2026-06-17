@@ -54,3 +54,9 @@ dotnet new webapi --use-controllers -o [Project Name]
     For dependency injection, refer to https://dotnettutorials.net/lesson/dependency-injection-asp-net-core-web-api/
 
     For returning proper API response, refer to https://codewithmukesh.com/blog/http-status-codes-aspnet-core-api-responses/
+
+8. Testing web api (https://medium.com/@parserdigital/testing-asp-net-core-8-0-apis-a-comprehensive-guide-42dc3b2a751a)
+
+For unit tests, https://www.c-sharpcorner.com/article/unit-testing-for-a-net-web-api-project/; https://dotnettutorials.net/lesson/unit-testing-service-layer-asp-net-core-web-api/
+
+For integration tests, https://dev.to/imdj/unit-testing-aspnet-core-web-api-with-moq-and-xunit-controllers-services-nci

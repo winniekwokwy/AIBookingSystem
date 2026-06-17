@@ -30,6 +30,10 @@ namespace AIBookingSystem.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AccessedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Instant>("AccessedTime")
                         .HasColumnType("timestamp with time zone");
 
@@ -58,6 +62,10 @@ namespace AIBookingSystem.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BookedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("BookingTime")
                         .HasColumnType("timestamp with time zone");
@@ -96,6 +104,10 @@ namespace AIBookingSystem.Migrations
                     b.Property<int?>("BookingId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ChangedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Instant>("ChangedTime")
                         .HasColumnType("timestamp with time zone");
 
@@ -106,7 +118,7 @@ namespace AIBookingSystem.Migrations
                     b.Property<int?>("RoomId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -146,12 +158,7 @@ namespace AIBookingSystem.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Rooms");
                 });
@@ -224,30 +231,21 @@ namespace AIBookingSystem.Migrations
 
             modelBuilder.Entity("ChangeLog", b =>
                 {
-                    b.HasOne("Booking", null)
+                    b.HasOne("Booking", "Booking")
                         .WithMany("Changes")
                         .HasForeignKey("BookingId");
 
-                    b.HasOne("Room", null)
+                    b.HasOne("Room", "Room")
                         .WithMany("Changes")
                         .HasForeignKey("RoomId");
 
                     b.HasOne("User", "User")
                         .WithMany("Changes")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
-                    b.Navigation("User");
-                });
+                    b.Navigation("Booking");
 
-            modelBuilder.Entity("Room", b =>
-                {
-                    b.HasOne("User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Room");
 
                     b.Navigation("User");
                 });

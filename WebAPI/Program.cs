@@ -1,3 +1,4 @@
+using AIBookingSystem.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<RoomBookingDbContext>(options =>
     options.UseNpgsql(builder.Configuration["dBConnectionString"], o => o.UseNodaTime()));
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddTransient<DataSeeder>();
 
 var app = builder.Build();

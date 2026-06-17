@@ -3,9 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 public class Room
 {
     public int Id {get; set;}
-    public required int UserId {get; set;}
-    public required User User { get; set;}
-    [ForeignKey("Id")]
     public required string Name { get; set;}
     public required int Floor { get; set;}
     public required int Capacity { get; set;}
