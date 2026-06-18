@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AIBookingSystem.Enums;
 
 namespace AIBookingSystem.DTO
 {
@@ -24,5 +25,8 @@ namespace AIBookingSystem.DTO
         public required string Role { get; set;}
         public required string CreatedBy {get; set;}
         public required int UserId {get; set;}
+        
+        [AllowedValues("Active", ErrorMessage = "Status can only be Active.")]
+        public string Status {get; set;} = "Active";
     }
 }

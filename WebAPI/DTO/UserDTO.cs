@@ -1,3 +1,5 @@
+using AIBookingSystem.Enums;
+
 namespace AIBookingSystem.DTO
 {
     public class UserDTO

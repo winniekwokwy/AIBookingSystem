@@ -17,6 +17,7 @@ dotnet new webapi --use-controllers -o [Project Name]
     });
 
 3. Add Model classes
+For Data Annotations, https://learn.microsoft.com/en-us/ef/ef6/modeling/code-first/data-annotations
 
 4. Create a database in PostgreSQL
 

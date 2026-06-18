@@ -9,14 +9,12 @@ namespace AIBookingSystem.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly ILogService _logService;
     private readonly ILogger<UserController> _logger;
 
-    public UserController(IUserService userService, ILogger<UserController> logger, ILogService logService)
+    public UserController(IUserService userService, ILogger<UserController> logger)
     {
         _userService = userService;
         _logger = logger;
-        _logService = logService;
     }
 
     [HttpGet]
@@ -25,7 +23,9 @@ public class UserController : ControllerBase
         var users = _userService.ListUsers();
         if (users == null)
         {
-            return NotFound(new { Message = "No user is found." });
+            string message = "No user is found.";
+            _logger.LogError(message);
+            return NotFound(new { Message = message });
         }
 
         return Ok(users);
@@ -34,34 +34,45 @@ public class UserController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<UserDTO>> GetUserByID(int id)
     {
+        string message = "";
         if (id > 0) 
         {
             var user = _userService.GetUserbyID(id);
             if (user == null)
             {
-                return NotFound(new { Message = $"User with ID, {id}, not found." });
+                message = $"User with ID, {id}, not found.";
+                _logger.LogError(message);
+                return NotFound(new { Message = message });
 
             }
             return Ok(user);
         }
 
-        return NotFound(new { Message = "Please provide valid Id for getting user." });
+        message = "Please provide valid Id for getting user.";
+        _logger.LogError(message);
+        return NotFound(new { Message = message });
     }
 
     [HttpGet]
     public ActionResult<IEnumerable<UserDTO>> GetUserByUsername(string userName)
     {
+        string message = "";
         if (userName != null)
         {
             var user = _userService.GetUserbyUsername(userName);
             if (user == null)
             {
-                return NotFound(new { Message = $"User with User name, {userName}, is not found." });
+                
+                message = $"User with User name, {userName}, is not found.";
+                _logger.LogError(message);
+                return NotFound(new { Message = message });
 
             }
             return Ok(user);
         }
-        return NotFound(new { Message = "Please provide valid user name for getting user." });
+        message = "Please provide valid user name for getting user.";
+        _logger.LogError(message);        
+        return NotFound(new { Message = message });
     }
 
     [HttpPost]
@@ -75,6 +86,14 @@ public class UserController : ControllerBase
             {
                 message = "Role can be User or Admin only";
             }
+            else if (createDto.Role == null)
+            {
+                message = "Status can be Active only.";
+            }
+            else if (!_userService.IsStatusValid(_userService.StatusMappingString2Enum(createDto.Role)))
+            {
+                message = "Status can be Active only.";
+            }
             else if (_userService.UsernameExsited(createDto.UserName))
             {
                 message = "The user name is in use. Please choose anothe one.";
@@ -87,15 +106,8 @@ public class UserController : ControllerBase
                     message = "User is not created successfully.";
                 }
                 else {
-                    var addLogSuccess = _logService.AddUserChangeLog(createDto);
-                    if (addLogSuccess)
-                    {
-                        return CreatedAtAction(nameof(GetUserByID), new { id = newUser.Id }, newUser);   
-                    }
-                    else
-                    {
-                        message = "User is not created successfully as change log is failed to update.";
-                    }
+
+                    return CreatedAtAction(nameof(GetUserByID), new { id = newUser.Id }, newUser);   
                     
                 }
             }
@@ -104,6 +116,7 @@ public class UserController : ControllerBase
         {
             message = "The user is not a valid user or User Id and Username does not match. Please check.";
         }
+        _logger.LogError(message);        
         return BadRequest(new { Error = message });
     }
 }

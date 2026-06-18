@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using AIBookingSystem.Enums;
 
 public class Booking
 {
@@ -14,6 +15,5 @@ public class Booking
     public required int RoomId { get; set;}
     public required Room Room { get; set;}
     public required DateTime BookingTime {get; set;}
-    public required string Status {get; set;} = "Active";
-    public ICollection<ChangeLog> Changes { get; set;} = null!;
+    public required BookingStatus Status {get; set;}
 }

@@ -1,4 +1,5 @@
 using Bogus;
+using AIBookingSystem.Enums;
 
 public class DataSeeder
 {
@@ -9,14 +10,14 @@ public class DataSeeder
         _context = context;
     }
 
-    public void SeedUsers(int noOfUsers, string typeOfUser)
+    public void SeedUsers(int noOfUsers, UserRoles typeOfUser)
     {
             var userFaker = new Faker<User>()
                 .RuleFor(u => u.Name, f => f.Name.FirstName())
                 .RuleFor(u => u.UserName, f => f.Internet.UserName())
                 .RuleFor(u => u.Password, f => "@bcd3fgh")
                 .RuleFor(u => u.Role, f => typeOfUser)
-                .RuleFor(u => u.Status, f => "Active");
+                .RuleFor(u => u.Status, f => UserStatus.Active);
 
            var users = userFaker.Generate(noOfUsers);
 
@@ -28,8 +29,8 @@ public class DataSeeder
     {
         if (!_context.Users.Any())
         {
-            SeedUsers(noOfUsers, "User");
-            SeedUsers(noOfAdmins, "Admin");
+            SeedUsers(noOfUsers, UserRoles.User);
+            SeedUsers(noOfAdmins, UserRoles.Admin);
             
         }
     }

@@ -1,3 +1,4 @@
+using AIBookingSystem.Enums;
 using Microsoft.EntityFrameworkCore;
 
 [Index(nameof(UserName), IsUnique = true)]
@@ -7,9 +8,8 @@ public class User
     public required string Name {get; set;}
     public required string UserName { get; set;}
     public required string Password { get; set;}
-    public required string Role { get; set;}
-    public required string Status { get; set;}
-    public ICollection<Booking> Bookings { get; set;} = null!;
-    public ICollection<ChangeLog> Changes { get; set;} = null!;
-    public ICollection<AccessLog> Access { get; set; } = null!;
+    public required UserRoles Role { get; set;}
+    public required UserStatus Status { get; set;}
+    public ICollection<Booking>? Bookings { get; set;}
+
 }

@@ -7,9 +7,26 @@ public class RoomBookingDbContext : DbContext
         
     }
 
+    // protected override void OnModelCreating(ModelBuilder modelBuilder)
+    // {
+    //     modelBuilder.Entity<User>()
+    //         .Property(o => o.Status)
+    //         .HasConversion<string>();
+
+    //     modelBuilder.Entity<Booking>()
+    //         .Property(o => o.Status)
+    //         .HasConversion<string>();
+    // }
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+ 
+        configurationBuilder.Properties<Enum>().HaveConversion<string>();
+    }
+
     public DbSet<User> Users { get; set; }
     public DbSet<Room> Rooms { get; set; }
     public DbSet<Booking> Bookings { get; set;}
-    public DbSet<AccessLog> AccessLogs { get; set; }
-    public DbSet<ChangeLog> ChangeLogs { get; set; }
+    public DbSet<Equipment> Equipments {get; set;}
 }
