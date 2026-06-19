@@ -1,8 +1,3 @@
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using AIBookingSystem.DTO;
-using AIBookingSystem.Enums;
-
 namespace AIBookingSystem.Repositories
 {
     public class UserRepository : IUserRepository
@@ -13,9 +8,9 @@ namespace AIBookingSystem.Repositories
             _dBContext = dBContext;
         }
 
-        public bool UsernameExsited(string username)
+        public bool UsernameInUse(string username)
         {
-            if (_dBContext.Users.FirstOrDefault(u => u.UserName == username) != null)
+            if (GetUserbyUsername(username)!= null)
             {
                 return true;
             }

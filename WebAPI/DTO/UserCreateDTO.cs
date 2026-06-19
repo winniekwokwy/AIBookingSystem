@@ -23,9 +23,7 @@ namespace AIBookingSystem.DTO
         [Required(ErrorMessage = "Role is required")]
         [AllowedValues("User", "Admin", ErrorMessage = "Role can only be User or Admin.")]
         public required string Role { get; set;}
-        public required string CreatedBy {get; set;}
-        public required int UserId {get; set;}
-        
+
         [AllowedValues("Active", ErrorMessage = "Status can only be Active.")]
         public string Status {get; set;} = "Active";
     }

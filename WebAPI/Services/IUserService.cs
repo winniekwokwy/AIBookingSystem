@@ -9,9 +9,7 @@ namespace AIBookingSystem.Services
         UserDTO? GetUserbyID(int ID);
         UserDTO? GetUserbyUsername(string userName);
         UserDTO? CreateUser(UserCreateDTO user);
-        bool IsUserValid(UserCreateDTO userDTO);
         bool IsRoleValid(string role);
-        bool UsernameExsited(string username);
         string? StatusMappingEnum2String(UserStatus status);
         UserStatus StatusMappingString2Enum(string status);
         bool IsStatusValid(UserStatus status);

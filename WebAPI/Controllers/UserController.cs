@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Services;
+using AIBookingSystem.Enums;
 
 namespace AIBookingSystem.Controllers;
 
@@ -80,41 +81,46 @@ public class UserController : ControllerBase
     {
          string message="";
 
-        if (_userService.IsUserValid(createDto))
+        if (createDto != null)
         {
-            if (!_userService.IsRoleValid(createDto.Role))
+            if (createDto.Role == null)
             {
-                message = "Role can be User or Admin only";
-            }
-            else if (createDto.Role == null)
-            {
-                message = "Status can be Active only.";
-            }
-            else if (!_userService.IsStatusValid(_userService.StatusMappingString2Enum(createDto.Role)))
-            {
-                message = "Status can be Active only.";
-            }
-            else if (_userService.UsernameExsited(createDto.UserName))
-            {
-                message = "The user name is in use. Please choose anothe one.";
+                message = "Please provide user role.";
             }
             else
             {
-                var newUser = _userService.CreateUser(createDto);
-                if (newUser == null)
+                if (!_userService.IsRoleValid(createDto.Role))
                 {
-                    message = "User is not created successfully.";
+                    message = "Role can be User or Admin only";
                 }
-                else {
+                else 
+                {
+                    if (createDto.Status == null){
+                        message = "Please provide user status.";
+                    }
+                    else 
+                    {
+                        if (!_userService.IsStatusValid(_userService.StatusMappingString2Enum(createDto.Status)))
+                        {
+                            message = "Status can be Active or Inactive only.";
+                        }
+                        else
+                        {
+                            var newUser = _userService.CreateUser(createDto);
+                            if (newUser == null)
+                            {
+                                message = "User is not created successfully. Username is in use. Please choose another one.";
+                            }
+                            else {
 
-                    return CreatedAtAction(nameof(GetUserByID), new { id = newUser.Id }, newUser);   
-                    
+                                return CreatedAtAction(nameof(GetUserByID), new { id = newUser.Id }, newUser);   
+                                
+                            }
+                        }
+                    }
                 }
             }
-        }
-        else
-        {
-            message = "The user is not a valid user or User Id and Username does not match. Please check.";
+            message = "Username is in use.";
         }
         _logger.LogError(message);        
         return BadRequest(new { Error = message });
