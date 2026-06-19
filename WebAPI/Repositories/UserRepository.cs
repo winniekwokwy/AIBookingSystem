@@ -1,0 +1,85 @@
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using AIBookingSystem.DTO;
+using AIBookingSystem.Enums;
+
+namespace AIBookingSystem.Repositories
+{
+    public class UserRepository : IUserRepository
+    {
+        private readonly RoomBookingDbContext _dBContext;
+        public UserRepository(RoomBookingDbContext dBContext)
+        {
+            _dBContext = dBContext;
+        }
+
+        public bool UsernameExsited(string username)
+        {
+            if (_dBContext.Users.FirstOrDefault(u => u.UserName == username) != null)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool IsUserValid(int UserId, string createdBy)
+        {
+            var userFound = _dBContext.Users.FirstOrDefault(u => u.UserName == createdBy);
+
+            if (userFound != null)
+            {
+                if (userFound.Id == UserId)
+                {
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        }
+
+        public IEnumerable<User>? ListUsers()
+        {
+            return _dBContext.Users
+                .ToList();
+        }
+        
+        public User? GetUserbyID(int id)
+        {
+            var user = _dBContext.Users.FirstOrDefault(u => u.Id == id);
+            if (user == null)
+            {
+                return null;
+            }
+
+            return user;
+        }
+
+        public User? GetUserbyUsername(string userName)
+        {
+
+            var user = _dBContext.Users.FirstOrDefault(u => u.UserName == userName);
+
+            if (user == null)
+            {
+                return null;
+            }
+            
+            return user;
+        }
+
+        public User? CreateUser(User user)
+        {    
+            _dBContext.Users.Add(user);
+            _dBContext.SaveChanges();
+
+            var addedUser = _dBContext.Users.FirstOrDefault(u => u.UserName == user.UserName);
+
+            if (addedUser != null)
+            {
+                return addedUser;
+            }
+            return null;
+        }
+
+    }
+}

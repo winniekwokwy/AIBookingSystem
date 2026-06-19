@@ -34,7 +34,7 @@ public class UserController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<UserDTO>> GetUserByID(int id)
     {
-        string message = "";
+        string message;
         if (id > 0) 
         {
             var user = _userService.GetUserbyID(id);
@@ -56,7 +56,7 @@ public class UserController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<UserDTO>> GetUserByUsername(string userName)
     {
-        string message = "";
+        string message;
         if (userName != null)
         {
             var user = _userService.GetUserbyUsername(userName);

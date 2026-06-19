@@ -7,17 +7,6 @@ public class RoomBookingDbContext : DbContext
         
     }
 
-    // protected override void OnModelCreating(ModelBuilder modelBuilder)
-    // {
-    //     modelBuilder.Entity<User>()
-    //         .Property(o => o.Status)
-    //         .HasConversion<string>();
-
-    //     modelBuilder.Entity<Booking>()
-    //         .Property(o => o.Status)
-    //         .HasConversion<string>();
-    // }
-
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         base.ConfigureConventions(configurationBuilder);
