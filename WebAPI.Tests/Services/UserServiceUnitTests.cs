@@ -4,8 +4,6 @@ using AIBookingSystem.Services;
 using AIBookingSystem.DTO;
 
 using Moq;
-using System.ComponentModel;
-using Bogus.DataSets;
 
 namespace WebAPI.Tests;
 
@@ -312,7 +310,7 @@ public class UserServiceUnitTests
     }
 
     [Fact]
-    public void ListUsers_WithoutData_ReturnEmptyList()
+    public void ListUsers_NoUsersInDB_ReturnEmptyList()
     {
 
         List<User> users = new List<User>{};
@@ -326,7 +324,7 @@ public class UserServiceUnitTests
     }
 
     [Fact]
-    public void ListUsers_Null_ReturnNull()
+    public void ListUsers_WhenRepoReturnNull_ReturnNull()
     {
 
         _mockUserRepo.Setup(repo => repo.ListUsers())
@@ -367,7 +365,7 @@ public class UserServiceUnitTests
         Assert.Equal(status, result.Status);
     }
 
-        [Fact]
+    [Fact]
     public void GetUserByID_IdNotFound_ReturnNull()
     {
         int id = -1;
