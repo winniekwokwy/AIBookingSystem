@@ -1,4 +1,6 @@
 using AIBookingSystem.Enums;
+using AIBookingSystem.Models;
+
 using Microsoft.EntityFrameworkCore;
 
 [Index(nameof(UserName), IsUnique = true)]

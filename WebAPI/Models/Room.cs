@@ -1,4 +1,4 @@
-
+using AIBookingSystem.Models;
 public class Room
 {
     public int Id {get; set;}

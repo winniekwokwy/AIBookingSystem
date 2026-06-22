@@ -1,21 +1,26 @@
 using Microsoft.EntityFrameworkCore;
 
-public class RoomBookingDbContext : DbContext
+using AIBookingSystem.Models;
+
+namespace AIBookingSystem.Data
 {
-    public RoomBookingDbContext(DbContextOptions<RoomBookingDbContext> options) : base(options)
+    public class RoomBookingDbContext : DbContext
     {
-        
-    }
+        public RoomBookingDbContext(DbContextOptions<RoomBookingDbContext> options) : base(options)
+        {
+            
+        }
 
-    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-    {
-        base.ConfigureConventions(configurationBuilder);
- 
-        configurationBuilder.Properties<Enum>().HaveConversion<string>();
-    }
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            base.ConfigureConventions(configurationBuilder);
+    
+            configurationBuilder.Properties<Enum>().HaveConversion<string>();
+        }
 
-    public DbSet<User> Users { get; set; }
-    public DbSet<Room> Rooms { get; set; }
-    public DbSet<Booking> Bookings { get; set;}
-    public DbSet<Equipment> Equipments {get; set;}
+        public DbSet<User> Users { get; set; }
+        public DbSet<Room> Rooms { get; set; }
+        public DbSet<Booking> Bookings { get; set;}
+        public DbSet<Equipment> Equipments {get; set;}
+    }
 }

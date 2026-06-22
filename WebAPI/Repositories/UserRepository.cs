@@ -1,3 +1,6 @@
+using AIBookingSystem.Data;
+using Microsoft.AspNetCore.Http.HttpResults;
+
 namespace AIBookingSystem.Repositories
 {
     public class UserRepository : IUserRepository
@@ -10,24 +13,38 @@ namespace AIBookingSystem.Repositories
 
         public bool UsernameInUse(string username)
         {
-            if (GetUserbyUsername(username)!= null)
+            if (username != null)
             {
-                return true;
+                if (GetUserbyUsername(username)!= null)
+                {
+                    return true;
+                }
             }
             return false;
         }
 
-        public bool IsUserValid(int UserId, string createdBy)
+        public bool IsUserValid(int userId, string createdBy)
         {
-            var userFound = _dBContext.Users.FirstOrDefault(u => u.UserName == createdBy);
-
-            if (userFound != null)
+            if (userId <= 0)
             {
-                if (userFound.Id == UserId)
-                {
-                    return true;
-                }
                 return false;
+            }
+            else if (createdBy == null || createdBy == "") 
+            {
+                return false;
+            }
+            else
+            {
+                var userFound = _dBContext.Users.FirstOrDefault(u => u.UserName == createdBy);
+
+                if (userFound != null)
+                {
+                    if (userFound.Id == userId)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
             }
             return false;
         }
@@ -64,14 +81,20 @@ namespace AIBookingSystem.Repositories
 
         public User? CreateUser(User user)
         {    
-            _dBContext.Users.Add(user);
-            _dBContext.SaveChanges();
-
-            var addedUser = _dBContext.Users.FirstOrDefault(u => u.UserName == user.UserName);
-
-            if (addedUser != null)
+            if (user != null) 
             {
-                return addedUser;
+                if (!UsernameInUse(user.UserName))
+                {
+                    _dBContext.Users.Add(user);
+                    _dBContext.SaveChanges();
+
+                    var addedUser = _dBContext.Users.FirstOrDefault(u => u.UserName == user.UserName);
+
+                    if (addedUser != null)
+                    {
+                        return addedUser;
+                    }
+                }
             }
             return null;
         }

@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using AIBookingSystem.Enums;
 
 namespace AIBookingSystem.DTO
 {

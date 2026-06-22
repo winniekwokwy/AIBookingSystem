@@ -1,5 +1,7 @@
 using AIBookingSystem.Repositories;
 using AIBookingSystem.Services;
+using AIBookingSystem.Data;
+
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
