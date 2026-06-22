@@ -60,4 +60,6 @@ For Data Annotations, https://learn.microsoft.com/en-us/ef/ef6/modeling/code-fir
 
 For unit tests, https://www.c-sharpcorner.com/article/unit-testing-for-a-net-web-api-project/; https://dotnettutorials.net/lesson/unit-testing-service-layer-asp-net-core-web-api/
 
+For exception and event in unit tests, https://hamidmosalla.com/2020/01/20/xunit-part-3-action-based-assertions-assert-raises-and-assert-throws/
+
 For integration tests, https://dev.to/imdj/unit-testing-aspnet-core-web-api-with-moq-and-xunit-controllers-services-nci

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Services;
-using AIBookingSystem.Enums;
 
 namespace AIBookingSystem.Controllers;
 
@@ -83,7 +82,7 @@ public class UserController : ControllerBase
 
         if (createDto != null)
         {
-            if (createDto.Role == null)
+            if (createDto.Role == null || createDto.Role == "")
             {
                 message = "Please provide user role.";
             }
@@ -91,11 +90,11 @@ public class UserController : ControllerBase
             {
                 if (!_userService.IsRoleValid(createDto.Role))
                 {
-                    message = "Role can be User or Admin only";
+                    message = "Role can be User or Admin only.";
                 }
                 else 
                 {
-                    if (createDto.Status == null){
+                    if (createDto.Status == null || createDto.Status == ""){
                         message = "Please provide user status.";
                     }
                     else 
@@ -120,9 +119,12 @@ public class UserController : ControllerBase
                     }
                 }
             }
-            message = "Username is in use.";
+        }
+        else 
+        {
+            message = "The UserCreateDTO is null.";
         }
         _logger.LogError(message);        
-        return BadRequest(new { Error = message });
+        return BadRequest (message);
     }
 }
