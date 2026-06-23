@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/WebAPI/">
+    <Project Path="WebAPI/AIBookingSystem.csproj" />
+  </Folder>
+  <Project Path="WebAPI.Tests/WebAPI.Tests.csproj" />
+</Solution>
