@@ -12,6 +12,6 @@ public class User
     public required string Password { get; set;}
     public required UserRoles Role { get; set;}
     public required UserStatus Status { get; set;}
-    public ICollection<Booking>? Bookings { get; set;}
+    public ICollection<Booking> Bookings { get; set;} = [];
 
 }
