@@ -116,15 +116,6 @@ namespace AIBookingSystem.Services
                 return (IEnumerable<UserDTO>?) users
                     .ToList()
                     .Select(u => MapUser2DTO(u));
-                    // .Select(u => new UserDTO
-                    //     {
-                    //         Id = u.Id,
-                    //         Name = u.Name,
-                    //         UserName = u.UserName,
-                    //         Role = RoleMappingEnum2String(u.Role),
-                    //         Status = StatusMappingEnum2String(u.Status)
-                    //     }
-                    // );
             }
             return null;
         }

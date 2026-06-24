@@ -18,7 +18,7 @@ public class RoomController : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<RoomDTO>> GetRoomByID(int id)
+    public ActionResult<IEnumerable<RoomDTO>> GetRoombyID(int id)
     {
         string message;
         if (id > 0) 
@@ -75,7 +75,7 @@ public class RoomController : ControllerBase
                             }
                             else {
 
-                                return CreatedAtAction(nameof(GetRoomByID), new { id = newRoom.Id }, newRoom);   
+                                return CreatedAtAction(nameof(GetRoombyID), new { id = newRoom.Id }, newRoom);   
                                 
                             }
                         }

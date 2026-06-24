@@ -1,4 +1,3 @@
-using AIBookingSystem.Models;
 
 namespace AIBookingSystem.DTO
 {

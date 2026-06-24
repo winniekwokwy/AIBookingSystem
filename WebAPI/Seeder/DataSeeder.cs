@@ -1,7 +1,6 @@
 using Bogus;
 using AIBookingSystem.Enums;
 using AIBookingSystem.Data;
-using Bogus.DataSets;
 
 public class DataSeeder
 {

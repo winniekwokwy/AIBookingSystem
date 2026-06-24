@@ -1,5 +1,4 @@
 using AIBookingSystem.Data;
-using AIBookingSystem.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIBookingSystem.Repositories
