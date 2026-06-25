@@ -24,16 +24,19 @@ namespace AIBookingSystem.Services
 
                 if (roomDTO.Equipments == null)
                 {
-                    roomDTO.Equipments = [];
+                    roomDTO.Equipments = [];                        
                 }
-                foreach (var equipment in room.Equipments)
+                if (room.Equipments != null)
                 {
-                    roomDTO.Equipments.Add(new EquipmentDTO
+                    foreach (var equipment in room.Equipments)
                     {
-                        Id = equipment.Id,
-                        Name = equipment.Name,
-                        RoomId = equipment.RoomId
-                    });
+                        roomDTO.Equipments.Add(new EquipmentDTO
+                        {
+                            Id = equipment.Id,
+                            Name = equipment.Name,
+                            RoomId = equipment.RoomId
+                        });
+                    }
                 }
                 return roomDTO;
             }
@@ -42,15 +45,19 @@ namespace AIBookingSystem.Services
 
         public RoomDTO? GetRoombyID(int id)
         {
-            var room = _roomRepo.GetRoombyID(id);
-            if (room == null)
+            if (id >= 0)
             {
-                return null;
+                var room = _roomRepo.GetRoombyID(id);
+                if (room == null)
+                {
+                    return null;
+                }
+
+                var newRoom = MapRoom2DTO(room);
+
+                return newRoom;
             }
-
-            var newRoom = MapRoom2DTO(room);
-
-            return newRoom;
+            return null;
         }
 
         public RoomDTO? CreateRoom(RoomCreateDTO room)
@@ -63,7 +70,6 @@ namespace AIBookingSystem.Services
                                     Capacity = room.Capacity,
                                     Description = room.Description
                                 };
-        
                 if (room.Equipments != null)
                 {
                     if (room.Equipments.Count()>0)
@@ -84,7 +90,6 @@ namespace AIBookingSystem.Services
                 }
 
                 var addedRoom = _roomRepo.CreateRoom(newRoom);
-
                 if (addedRoom != null)
                 {
                     return MapRoom2DTO(addedRoom);

@@ -54,19 +54,17 @@ public class RoomControllerUnitTests
     }
 
     [Fact]
-    public void GetRoombyID_InvalidId_ReturnNull()
+    public void GetRoombyID_InvalidId_ReturnNotFound()
     {
         int id = -1;
 
-        _mockRoomService.Setup(s => s.GetRoombyID(id))
-                        .Returns((RoomDTO) null);
         var result = _roomController.GetRoombyID(id);
 
         Assert.IsType<NotFoundObjectResult>(result.Result); 
     }
 
     [Fact]
-    public void GetRoombyID_NonExistingId_ReturnNull()
+    public void GetRoombyID_NonExistingId_ReturnNotFound()
     {
         int id = 999;
 
@@ -76,6 +74,16 @@ public class RoomControllerUnitTests
 
         Assert.IsType<NotFoundObjectResult>(result.Result); 
     }    
+
+    [Fact]
+    public void GetRoombyID_IdIsZero_ReturnNotFound()
+    {
+        int id = 0;
+
+        var result = _roomController.GetRoombyID(id);
+
+        Assert.IsType<NotFoundObjectResult>(result.Result); 
+    }   
 
     [Fact]
     public void CreateRoom_ValidRoomCreateDTO_ReturnRoomDTO()
@@ -115,15 +123,23 @@ public class RoomControllerUnitTests
                         .Returns(roomDTO);
         var result = _roomController.CreateRoom(roomCreateDTO);
         Assert.IsType<CreatedAtActionResult>(result.Result); 
-        Assert.Equal(roomDTO, (result.Result as CreatedAtActionResult).Value);
+        var returnedDTO = (result.Result as CreatedAtActionResult).Value as RoomDTO;
+        Assert.Equal(roomDTO.Name, returnedDTO.Name);
+        Assert.Equal(roomDTO.Floor, returnedDTO.Floor);
+        Assert.Equal(roomDTO.Capacity, returnedDTO.Capacity);
+        Assert.Equal(roomDTO.Description, returnedDTO.Description);
+        Assert.Equal(roomDTO.Equipments.Count, returnedDTO.Equipments.Count);
+        if (roomDTO.Equipments.Count>0)
+        {
+            Assert.Equal(roomDTO.Equipments.First().Name, returnedDTO.Equipments.First().Name);
+        }
     }
 
     [Fact]
     public void CreateRoom_NullRoomCreateDTO_ReturnBadRequest()
     {
         var expected = "The RoomCreateDTO is null.";
-        _mockRoomService.Setup(s => s.CreateRoom((RoomCreateDTO) null))
-                        .Returns((RoomDTO) null);
+
         var result = _roomController.CreateRoom((RoomCreateDTO) null);
         var badRequstResult = result.Result as BadRequestObjectResult;
         Assert.IsType<BadRequestObjectResult>(badRequstResult);
@@ -316,7 +332,49 @@ public class RoomControllerUnitTests
         Assert.Equal(expected, badRequstResult.Value);
     }
 
-        [Fact]
+    [Fact]
+    public void CreateRoom_NullEquipments_ReturnRoomDTO()
+    {
+        int id = 1;
+        string name = "Paris";
+        int floor = 5;
+        int capacity = 6;
+        string description = $"This room is located at {floor}/F which can accommodate {capacity} people.";
+
+        var roomCreateDTO = new RoomCreateDTO
+                        {
+                            Name = name,
+                            Floor = floor,
+                            Capacity = capacity,
+                            Description = description,
+                        };
+        
+        roomCreateDTO.Equipments = null;
+
+        var roomDTO = new RoomDTO
+                        {
+                            Id = id,
+                            Name = name,
+                            Floor = floor,
+                            Capacity = capacity,
+                            Description = description,
+                        };
+
+        roomDTO.Equipments = [];
+
+        _mockRoomService.Setup(s => s.CreateRoom(roomCreateDTO))
+                        .Returns(roomDTO);
+        var result = _roomController.CreateRoom(roomCreateDTO);
+        Assert.IsType<CreatedAtActionResult>(result.Result); 
+        var returnedDTO = (result.Result as CreatedAtActionResult).Value as RoomDTO;
+        Assert.Equal(roomDTO.Name, returnedDTO.Name);
+        Assert.Equal(roomDTO.Floor, returnedDTO.Floor);
+        Assert.Equal(roomDTO.Capacity, returnedDTO.Capacity);
+        Assert.Equal(roomDTO.Description, returnedDTO.Description);
+        Assert.Equal(roomDTO.Equipments.Count, returnedDTO.Equipments.Count);
+    }
+
+    [Fact]
     public void CreateRoom_RoomCreateionFailed_ReturnBadRequest()
     {
         int id = 1;
