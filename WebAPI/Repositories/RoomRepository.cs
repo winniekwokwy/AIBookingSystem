@@ -11,6 +11,13 @@ namespace AIBookingSystem.Repositories
             _dBContext = dBContext;
         }
 
+        public IEnumerable<Room>? ListRooms()
+        {
+            return _dBContext.Rooms
+                .Include(r => r.Equipments)
+                .ToList();
+        }
+
         public Room? GetRoombyID(int id)
         {
             var room = _dBContext.Rooms

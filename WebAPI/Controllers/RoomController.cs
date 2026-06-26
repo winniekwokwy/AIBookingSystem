@@ -2,92 +2,108 @@ using Microsoft.AspNetCore.Mvc;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Services;
 
-namespace AIBookingSystem.Controllers;
-
-[ApiController]
-[Route("api/[controller]/[action]")]
-public class RoomController : ControllerBase
+namespace AIBookingSystem.Controllers
 {
-    private readonly IRoomService _roomService;
-    private readonly ILogger<RoomController> _logger;
 
-    public RoomController(IRoomService roomService, ILogger<RoomController> logger)
+    [ApiController]
+    [Route("api/[controller]/[action]")]
+    public class RoomController : ControllerBase
     {
-        _roomService = roomService;
-        _logger = logger;
-    }
+        private readonly IRoomService _roomService;
+        private readonly ILogger<RoomController> _logger;
 
-    [HttpGet]
-    public ActionResult<IEnumerable<RoomDTO>> GetRoombyID(int id)
-    {
-        string message;
-        if (id > 0) 
+        public RoomController(IRoomService roomService, ILogger<RoomController> logger)
         {
-            var room = _roomService.GetRoombyID(id);
-            if (room == null)
-            {
-                message = $"Room with ID, {id}, not found.";
-                _logger.LogError(message);
-                return NotFound(new { Message = message });
-
-            }
-            return Ok(room);
+            _roomService = roomService;
+            _logger = logger;
         }
 
-        message = "Please provide valid Id for getting a room.";
-        _logger.LogError(message);
-        return NotFound(new { Message = message });
-    }
-
-    [HttpPost]
-    public ActionResult<RoomDTO> CreateRoom([FromBody] RoomCreateDTO createDto)
-    {
-        string message="";
-        if (createDto != null)
+        [HttpGet]
+        public ActionResult<IEnumerable<RoomDTO>> ListRooms()
         {
-            if (createDto.Floor < 0)
+            var rooms = _roomService.ListRooms();
+            if (rooms == null)
             {
-                message = "Please provide a valid location/floor.";
+                string message = "No room is found.";
+                _logger.LogError(message);
+                return NotFound(new { Message = message });
             }
-            else
+
+            return Ok(rooms);
+        }
+
+        [HttpGet]
+        public ActionResult<IEnumerable<RoomDTO>> GetRoombyID(int id)
+        {
+            string message;
+            if (id > 0) 
             {
-                if (createDto.Capacity <= 0)
+                var room = _roomService.GetRoombyID(id);
+                if (room == null)
                 {
-                    message = "Capacity must be bigger than 0.";
+                    message = $"Room with ID, {id}, not found.";
+                    _logger.LogError(message);
+                    return NotFound(new { Message = message });
+
                 }
-                else 
+                return Ok(room);
+            }
+
+            message = "Please provide valid Id for getting a room.";
+            _logger.LogError(message);
+            return NotFound(new { Message = message });
+        }
+
+        [HttpPost]
+        public ActionResult<RoomDTO> CreateRoom([FromBody] RoomCreateDTO createDto)
+        {
+            string message="";
+            if (createDto != null)
+            {
+                if (createDto.Floor < 0)
                 {
-                    if (createDto.Name == null || createDto.Name == ""){
-                        message = "Please provide a name of the room.";
+                    message = "Please provide a valid location/floor.";
+                }
+                else
+                {
+                    if (createDto.Capacity <= 0)
+                    {
+                        message = "Capacity must be bigger than 0.";
                     }
                     else 
                     {
-                        if (createDto.Description == null || createDto.Description == "")
-                        {
-                            message = "Please provide description of the room.";
+                        if (createDto.Name == null || createDto.Name == ""){
+                            message = "Please provide a name of the room.";
                         }
-                        else
+                        else 
                         {
-                            var newRoom = _roomService.CreateRoom(createDto);
-                            if (newRoom == null)
+                            if (createDto.Description == null || createDto.Description == "")
                             {
-                                message = "Room is not created successfully.";
+                                message = "Please provide description of the room.";
                             }
-                            else {
+                            else
+                            {
+                                var newRoom = _roomService.CreateRoom(createDto);
+                                if (newRoom == null)
+                                {
+                                    message = "Room is not created successfully.";
+                                }
+                                else {
 
-                                return CreatedAtAction(nameof(GetRoombyID), new { id = newRoom.Id }, newRoom);   
-                                
+                                    return CreatedAtAction(nameof(GetRoombyID), new { id = newRoom.Id }, newRoom);   
+                                    
+                                }
                             }
                         }
                     }
                 }
             }
+            else 
+            {
+                message = "The RoomCreateDTO is null.";
+            }
+            _logger.LogError(message);        
+            return BadRequest (message);
         }
-        else 
-        {
-            message = "The RoomCreateDTO is null.";
-        }
-        _logger.LogError(message);        
-        return BadRequest (message);
     }
 }

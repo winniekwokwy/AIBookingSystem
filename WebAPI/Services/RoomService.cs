@@ -43,6 +43,19 @@ namespace AIBookingSystem.Services
             return null;
         }
 
+        public IEnumerable<RoomDTO>? ListRooms()
+        {
+            var rooms = _roomRepo.ListRooms();
+
+            if (rooms != null)
+            {
+                return (IEnumerable<RoomDTO>?) rooms
+                    .ToList()
+                    .Select(r => MapRoom2DTO(r));
+            }
+            return null;
+        }
+
         public RoomDTO? GetRoombyID(int id)
         {
             if (id >= 0)
