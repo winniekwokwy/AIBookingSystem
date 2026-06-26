@@ -16,6 +16,8 @@ builder.Services.AddDbContext<RoomBookingDbContext>(options =>
     options.UseNpgsql(builder.Configuration["dBConnectionString"], o => o.UseNodaTime()));
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddTransient<DataSeeder>();
 
 var app = builder.Build();
@@ -31,6 +33,7 @@ var app = builder.Build();
         {
             var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
             seeder.SeedUsers(7, 3);
+            seeder.SeedRooms(20);
         }
     }
 

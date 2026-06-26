@@ -92,23 +92,30 @@ namespace AIBookingSystem.Services
             }
             return (UserRoles) (-1);
         }
+
+        public UserDTO? MapUser2DTO(User user)
+        {
+            if (user != null){
+                return new UserDTO{
+                    Id = user.Id,
+                    Name = user.Name,
+                    UserName = user.UserName,
+                    Role = RoleMappingEnum2String(user.Role),
+                    Status = StatusMappingEnum2String(user.Status)
+                };
+            }
+            return null;
+        }
+
         public IEnumerable<UserDTO>? ListUsers()
         {
             var users = _userRepo.ListUsers();
 
             if (users != null)
             {
-                return users
+                return (IEnumerable<UserDTO>?) users
                     .ToList()
-                    .Select(u => new UserDTO
-                        {
-                            Id = u.Id,
-                            Name = u.Name,
-                            UserName = u.UserName,
-                            Role = RoleMappingEnum2String(u.Role),
-                            Status = StatusMappingEnum2String(u.Status)
-                        }
-                    );
+                    .Select(u => MapUser2DTO(u));
             }
             return null;
         }
@@ -121,14 +128,7 @@ namespace AIBookingSystem.Services
                 return null;
             }
 
-            return new UserDTO
-            {
-                Id = user.Id,
-                Name = user.Name,
-                UserName = user.UserName,
-                Role = RoleMappingEnum2String(user.Role),
-                Status = StatusMappingEnum2String(user.Status)
-            };
+            return MapUser2DTO(user);
         }
 
         public UserDTO? GetUserbyUsername(string userName)
@@ -141,14 +141,7 @@ namespace AIBookingSystem.Services
                 return null;
             }
             
-            return new UserDTO
-            {
-                Id = user.Id,
-                Name = user.Name,
-                UserName = user.UserName,
-                Role = RoleMappingEnum2String(user.Role),
-                Status = StatusMappingEnum2String(user.Status)
-            };
+            return MapUser2DTO(user);
         }
 
         public UserDTO? CreateUser(UserCreateDTO user)
@@ -171,14 +164,7 @@ namespace AIBookingSystem.Services
 
                         if (addedUser != null)
                         {
-                            return new UserDTO
-                            {
-                                Id = addedUser.Id,
-                                Name = user.Name,
-                                UserName = user.UserName,
-                                Role = user.Role,
-                                Status = user.Status
-                            };
+                            return MapUser2DTO(addedUser);
                         }
                     }
                 }

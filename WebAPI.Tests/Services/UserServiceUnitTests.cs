@@ -1,6 +1,6 @@
-﻿using AIBookingSystem.Enums;
-using AIBookingSystem.Repositories;
+﻿using AIBookingSystem.Repositories;
 using AIBookingSystem.Services;
+using AIBookingSystem.Enums;
 using AIBookingSystem.DTO;
 
 using Moq;
@@ -168,6 +168,41 @@ public class UserServiceUnitTests
     {
         var result = _userService.StatusMappingEnum2String((UserStatus) (-1));
         Assert.Null(result);
+    }
+
+    [Fact]
+    public void MapUser2DTO_ValidUser_ReturnUserDTO()
+    {
+        string name = "May Nicolaos";
+        string username = "MayNicolaos";
+        string password = "M@yNic01@0s";
+        string role = "Admin";
+        string status = "Active";
+
+        var result = _userService.MapUser2DTO(new User
+                    {
+                        Id = 1,
+                        Name = name,
+                        UserName = username,
+                        Password = password,
+                        Role = UserRoles.Admin,
+                        Status = UserStatus.Active
+                    });
+        Assert.NotNull(result);
+        Assert.Equal(name, result.Name);
+        Assert.Equal(username, result.UserName);
+        Assert.Equal(role, result.Role);
+        Assert.Equal(status, result.Status);    
+    }
+
+    [Fact]
+    public void MapUser2DTO_NullUser_ReturnNull()
+    {
+
+        var result = _userService.MapUser2DTO(null);
+
+        Assert.Null(result);
+
     }
 
     [Fact]

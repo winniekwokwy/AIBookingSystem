@@ -58,7 +58,7 @@ For Data Annotations, https://learn.microsoft.com/en-us/ef/ef6/modeling/code-fir
 
 8. Testing web api (https://medium.com/@parserdigital/testing-asp-net-core-8-0-apis-a-comprehensive-guide-42dc3b2a751a)
 
-For unit tests, https://www.c-sharpcorner.com/article/unit-testing-for-a-net-web-api-project/; https://dotnettutorials.net/lesson/unit-testing-service-layer-asp-net-core-web-api/
+For unit tests, https://www.c-sharpcorner.com/article/unit-testing-for-a-net-web-api-project/; https://dotnettutorials.net/lesson/unit-testing-service-layer-asp-net-core-web-api/; https://medium.com/@codebob75/unit-testing-in-c-with-xunit-complete-guide-18ee2b919b05
 
 For exception and event in unit tests, https://hamidmosalla.com/2020/01/20/xunit-part-3-action-based-assertions-assert-raises-and-assert-throws/
 
