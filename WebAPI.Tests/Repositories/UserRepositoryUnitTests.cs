@@ -59,7 +59,7 @@ namespace WebAPI.Tests.Repositories
         public void IsUserValid_ValidUserIdnNullCreatedBy_ReturnFalse()
         {
             int id = 1;
-            string createdBy = null;
+            string createdBy = null!;
             var context = GetInMemoryDbContext(true);
             var repository = new UserRepository(context);
 
@@ -179,7 +179,7 @@ namespace WebAPI.Tests.Repositories
         [Fact]
         public void GetUserByID_NullUsername_ReturnNull()
         {
-            string username = null;
+            string username = null!;
             var context = GetInMemoryDbContext(true);
             var repository = new UserRepository(context);
 
@@ -233,7 +233,7 @@ namespace WebAPI.Tests.Repositories
         [Fact]
         public void CreateUser_NullUser_ReturnNull()
         {
-            User user = null;
+            User user = null!;
             var context = GetInMemoryDbContext(false);
             var repository = new UserRepository(context);
 
@@ -283,7 +283,7 @@ namespace WebAPI.Tests.Repositories
         [Fact]
         public void UsernameInUse_NullUsername_ReturnFalse()
         {
-            string username = null;
+            string username = null!;
             var context = GetInMemoryDbContext(true);
             var repository = new UserRepository(context);
 
@@ -329,7 +329,7 @@ namespace WebAPI.Tests.Repositories
         }
 
         [Fact]
-        public void ListUsers_NoUsersInDb_ReturnUsers()
+        public void ListUsers_NoUsersInDb_ReturnEmptyList()
         {
             var context = GetInMemoryDbContext(false);
             var repository = new UserRepository(context);
