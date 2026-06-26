@@ -31,6 +31,43 @@ namespace WebAPI.Tests.Repositories
         }
 
         [Fact]
+        public void ListRooms_FoundRooms_ReturnListOfRoom()
+        {
+            int id = 1;
+            string name = "Mongkok";
+            int floor = 2;
+            int capacity = 5;
+            string description = $"This room is located at {floor}/F which can accommodate {capacity} people.";
+
+            var context = GetInMemoryDbContext(true);
+            var repository = new RoomRepository(context);
+            var result = repository.ListRooms();
+
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count());
+            if (result.Count()>0)
+            {
+                Assert.Equal(id, result.First().Id);
+                Assert.Equal(name, result.First().Name);
+                Assert.Equal(floor, result.First().Floor);
+                Assert.Equal(capacity, result.First().Capacity);   
+                Assert.Equal(description, result.First().Description);
+            }
+        }
+
+        [Fact]
+        public void ListRooms_NoRooms_ReturnEmptyList()
+        {
+
+            var context = GetInMemoryDbContext(false);
+            var repository = new RoomRepository(context);
+            var result = repository.ListRooms();
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
         public void GetRoombyID_ValidId_ReturnRoom()
         {
             int id = 1;
@@ -117,7 +154,7 @@ namespace WebAPI.Tests.Repositories
 
             var context = GetInMemoryDbContext(true);
             var repository = new RoomRepository(context);
-            var result = repository.CreateRoom((Room)null);
+            var result = repository.CreateRoom((Room?)null!);
 
             Assert.Null(result);
         }
@@ -137,7 +174,7 @@ namespace WebAPI.Tests.Repositories
                                 Capacity = capacity,
                                 Description = description
                             };
-            room.Equipments = null;
+            room.Equipments = null!;
 
             var context = GetInMemoryDbContext(true);
             var repository = new RoomRepository(context);
