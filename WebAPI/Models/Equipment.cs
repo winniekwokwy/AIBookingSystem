@@ -7,5 +7,5 @@ public class Equipment
 
     [ForeignKey ("Id")]
     public required int RoomId {get; set;}
-    public required Room Room {get; set;}
+    public Room? Room {get; set;}
 }

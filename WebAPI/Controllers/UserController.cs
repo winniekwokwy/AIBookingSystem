@@ -2,129 +2,131 @@ using Microsoft.AspNetCore.Mvc;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Services;
 
-namespace AIBookingSystem.Controllers;
-
-[ApiController]
-[Route("api/[controller]/[action]")]
-public class UserController : ControllerBase
+namespace AIBookingSystem.Controllers
 {
-    private readonly IUserService _userService;
-    private readonly ILogger<UserController> _logger;
 
-    public UserController(IUserService userService, ILogger<UserController> logger)
+    [ApiController]
+    [Route("api/[controller]/[action]")]
+    public class UserController : ControllerBase
     {
-        _userService = userService;
-        _logger = logger;
-    }
+        private readonly IUserService _userService;
+        private readonly ILogger<UserController> _logger;
 
-    [HttpGet]
-    public ActionResult<IEnumerable<UserDTO>> ListUsers()
-    {
-        var users = _userService.ListUsers();
-        if (users == null)
+        public UserController(IUserService userService, ILogger<UserController> logger)
         {
-            string message = "No user is found.";
+            _userService = userService;
+            _logger = logger;
+        }
+
+        [HttpGet]
+        public ActionResult<IEnumerable<UserDTO>> ListUsers()
+        {
+            var users = _userService.ListUsers();
+            if (users == null)
+            {
+                string message = "No user is found.";
+                _logger.LogError(message);
+                return NotFound(new { Message = message });
+            }
+
+            return Ok(users);
+        }
+
+        [HttpGet]
+        public ActionResult<IEnumerable<UserDTO>> GetUserByID(int id)
+        {
+            string message;
+            if (id > 0) 
+            {
+                var user = _userService.GetUserbyID(id);
+                if (user == null)
+                {
+                    message = $"User with ID, {id}, not found.";
+                    _logger.LogError(message);
+                    return NotFound(new { Message = message });
+
+                }
+                return Ok(user);
+            }
+
+            message = "Please provide valid Id for getting user.";
             _logger.LogError(message);
             return NotFound(new { Message = message });
         }
 
-        return Ok(users);
-    }
-
-    [HttpGet]
-    public ActionResult<IEnumerable<UserDTO>> GetUserByID(int id)
-    {
-        string message;
-        if (id > 0) 
+        [HttpGet]
+        public ActionResult<IEnumerable<UserDTO>> GetUserByUsername(string userName)
         {
-            var user = _userService.GetUserbyID(id);
-            if (user == null)
+            string message;
+            if (userName != null)
             {
-                message = $"User with ID, {id}, not found.";
-                _logger.LogError(message);
-                return NotFound(new { Message = message });
-
-            }
-            return Ok(user);
-        }
-
-        message = "Please provide valid Id for getting user.";
-        _logger.LogError(message);
-        return NotFound(new { Message = message });
-    }
-
-    [HttpGet]
-    public ActionResult<IEnumerable<UserDTO>> GetUserByUsername(string userName)
-    {
-        string message;
-        if (userName != null)
-        {
-            var user = _userService.GetUserbyUsername(userName);
-            if (user == null)
-            {
-                
-                message = $"User with User name, {userName}, is not found.";
-                _logger.LogError(message);
-                return NotFound(new { Message = message });
-
-            }
-            return Ok(user);
-        }
-        message = "Please provide valid user name for getting user.";
-        _logger.LogError(message);        
-        return NotFound(new { Message = message });
-    }
-
-    [HttpPost]
-    public ActionResult<UserDTO> CreateUser([FromBody] UserCreateDTO createDto)
-    {
-         string message="";
-
-        if (createDto != null)
-        {
-            if (createDto.Role == null || createDto.Role == "")
-            {
-                message = "Please provide user role.";
-            }
-            else
-            {
-                if (!_userService.IsRoleValid(createDto.Role))
+                var user = _userService.GetUserbyUsername(userName);
+                if (user == null)
                 {
-                    message = "Role can be User or Admin only.";
+                    
+                    message = $"User with User name, {userName}, is not found.";
+                    _logger.LogError(message);
+                    return NotFound(new { Message = message });
+
                 }
-                else 
+                return Ok(user);
+            }
+            message = "Please provide valid user name for getting user.";
+            _logger.LogError(message);        
+            return NotFound(new { Message = message });
+        }
+
+        [HttpPost]
+        public ActionResult<UserDTO> CreateUser([FromBody] UserCreateDTO createDto)
+        {
+            string message="";
+
+            if (createDto != null)
+            {
+                if (createDto.Role == null || createDto.Role == "")
                 {
-                    if (createDto.Status == null || createDto.Status == ""){
-                        message = "Please provide user status.";
+                    message = "Please provide user role.";
+                }
+                else
+                {
+                    if (!_userService.IsRoleValid(createDto.Role))
+                    {
+                        message = "Role can be User or Admin only.";
                     }
                     else 
                     {
-                        if (!_userService.IsStatusValid(_userService.StatusMappingString2Enum(createDto.Status)))
-                        {
-                            message = "Status can be Active or Inactive only.";
+                        if (createDto.Status == null || createDto.Status == ""){
+                            message = "Please provide user status.";
                         }
-                        else
+                        else 
                         {
-                            var newUser = _userService.CreateUser(createDto);
-                            if (newUser == null)
+                            if (!_userService.IsStatusValid(_userService.StatusMappingString2Enum(createDto.Status)))
                             {
-                                message = "User is not created successfully. Username is in use. Please choose another one.";
+                                message = "Status can be Active or Inactive only.";
                             }
-                            else {
+                            else
+                            {
+                                var newUser = _userService.CreateUser(createDto);
+                                if (newUser == null)
+                                {
+                                    message = "User is not created successfully. Username is in use. Please choose another one.";
+                                }
+                                else {
 
-                                return CreatedAtAction(nameof(GetUserByID), new { id = newUser.Id }, newUser);   
-                                
+                                    return CreatedAtAction(nameof(GetUserByID), new { id = newUser.Id }, newUser);   
+                                    
+                                }
                             }
                         }
                     }
                 }
             }
+            else 
+            {
+                message = "The UserCreateDTO is null.";
+            }
+            _logger.LogError(message);        
+            return BadRequest (message);
         }
-        else 
-        {
-            message = "The UserCreateDTO is null.";
-        }
-        _logger.LogError(message);        
-        return BadRequest (message);
     }
 }

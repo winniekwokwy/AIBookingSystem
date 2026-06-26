@@ -1,5 +1,4 @@
 using AIBookingSystem.Data;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace AIBookingSystem.Repositories
 {
