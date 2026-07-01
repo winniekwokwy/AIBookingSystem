@@ -6,8 +6,9 @@ using AIBookingSystem.Enums;
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Data.Common;
+using System.Net;
 using System.Reflection;
-using Xunit.v3;
 
 namespace WebAPI.Tests.Controllers
 
@@ -452,6 +453,91 @@ namespace WebAPI.Tests.Controllers
             var badRequstResult = result.Result as BadRequestObjectResult;
             Assert.IsType<BadRequestObjectResult>(badRequstResult);
             Assert.Equal(expected, badRequstResult.Value);
+        }
+
+        [Fact]
+        public void FindAvailableRoomsbyDateTime_ValidPeriod_ReturnListofAvailableRooms()
+        {
+            RoomDTO room1 = new RoomDTO() { Id = 1, Name = "Mongkok", Floor = 2, Capacity = 5, Description = "This room is located at 2/F which can accommodate 5 people."};
+            RoomDTO room2 = new RoomDTO() { Id = 2, Name = "Tai wai", Floor = 3, Capacity = 8, Description = "This room is located at 3/F which can accommodate 8 people."};
+
+            List<RoomDTO> rooms = new List<RoomDTO> {room1, room2};
+                
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+            _mockRoomService.Setup(s => s.FindAvailableRoomsbyDateTime(from, to))
+                            .Returns(rooms);
+            var result = _roomController.FindAvailableRoomsbyDateTime(from, to);
+            
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var returnedRooms = Assert.IsAssignableFrom<IEnumerable<RoomDTO>>(okResult.Value);
+            Assert.Equal(rooms.Count, returnedRooms.Count());
+            if (returnedRooms.Count()>0)
+            {
+                Assert.Equal(room1.Name, returnedRooms.First().Name);
+                Assert.Equal(room1.Floor, returnedRooms.First().Floor);
+                Assert.Equal(room1.Capacity, returnedRooms.First().Capacity);
+                Assert.Equal(room1.Description, returnedRooms.First().Description);
+            }
+        }
+
+        [Fact]
+        public void FindAvailableRoomsbyDateTime_FromLaterThanTo_ReturnNull()
+        {
+            string expected = "To date must be later than From date.";
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+
+            var result = _roomController.FindAvailableRoomsbyDateTime(from, to);
+            
+            var badRequstResult = result.Result as BadRequestObjectResult;
+            Assert.IsType<BadRequestObjectResult>(badRequstResult);
+            Assert.Equal(expected, badRequstResult.Value);
+        }
+
+
+        [Fact]
+        public void FindAvailableRoomsbyDateTime_PeriodInThePast_ReturnNull()
+        {
+            string expected = "You can only book rooms for future.";
+            DateTimeOffset from = new DateTimeOffset(2025, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2025, 12, 20, 15, 30, 0, TimeSpan.Zero);
+
+            var result = _roomController.FindAvailableRoomsbyDateTime(from, to);
+            
+            var badRequstResult = result.Result as BadRequestObjectResult;
+            Assert.IsType<BadRequestObjectResult>(badRequstResult);
+            Assert.Equal(expected, badRequstResult.Value);
+        }
+
+        [Fact]
+        public void FindAvailableRoomsbyDateTime_PeriodNotOnTheSameDay_ReturnNull()
+        {
+            string expected = "You cannot book room across 2 days. Please split the booking into 2.";
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 21, 15, 30, 0, TimeSpan.Zero);
+
+            var result = _roomController.FindAvailableRoomsbyDateTime(from, to);
+            
+            var badRequstResult = result.Result as BadRequestObjectResult;
+            Assert.IsType<BadRequestObjectResult>(badRequstResult);
+            Assert.Equal(expected, badRequstResult.Value);
+        }
+
+        [Fact]
+        public void FindAvailableRoomsbyDateTime_ValidPeriodServiceReturnNull_ReturnNull()
+        {
+            string expected = "No available room is found.";
+                
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+            _mockRoomService.Setup(s => s.FindAvailableRoomsbyDateTime(from, to))
+                            .Returns((List<RoomDTO>?)null);
+            var result = _roomController.FindAvailableRoomsbyDateTime(from, to);
+            
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
         }
     }
 }

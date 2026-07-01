@@ -1,6 +1,9 @@
 using Bogus;
 using AIBookingSystem.Enums;
 using AIBookingSystem.Data;
+using AIBookingSystem.Models;
+using NodaTime;
+using AIBookingSystem.Services;
 
 public class DataSeeder
 {
@@ -32,7 +35,6 @@ public class DataSeeder
         {
             SeedUsers(noOfUsers, UserRoles.User);
             SeedUsers(noOfAdmins, UserRoles.Admin);
-            
         }
     }
 
@@ -95,6 +97,52 @@ public class DataSeeder
                     count = count+1;
                 }
                 _context.AddRange(rooms);
+                _context.SaveChanges();
+            }
+        }
+    }
+
+    public void seedBookings(int noOfBookings, DateTimeOffset from, DateTimeOffset to)
+    {
+        if (!_context.Bookings.Any())
+        {
+              var bookingFaker = new Faker<Booking>()
+                .RuleFor(b => b.Status, f => f.PickRandom<BookingStatus>());
+
+            var bookings = bookingFaker.Generate(noOfBookings);
+            if (bookings != null)
+            {
+                Random random = new Random();
+                var users = _context.Users.ToList();
+                var rooms = _context.Rooms.ToList();
+                var index = 0;
+                foreach (var booking in bookings)
+                {
+                    booking.BookingFrom = TimeService.GenerateRandomDateTime(from, to);
+                    booking.BookingTo = booking.BookingFrom.AddHours(1);
+
+                    if (users != null)
+                    {
+                        index = random.Next(0, users.Count);
+                        booking.BookedBy = ((User) users[index]).UserName;
+                        booking.UserId = ((User) users[index]).Id;
+                    }
+                    else{
+                        booking.BookedBy = "";
+                        booking.UserId = 0;
+                    }
+
+                    if (rooms != null)
+                    {
+                        index = random.Next(0, rooms.Count);
+                        booking.RoomId = ((Room) rooms[index]).Id;
+                    }
+                    else
+                    {
+                        booking.RoomId = 0;
+                    }
+                }
+                 _context.AddRange(bookings);
                 _context.SaveChanges();
             }
         }

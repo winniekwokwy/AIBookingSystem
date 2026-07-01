@@ -3,6 +3,7 @@ using AIBookingSystem.Services;
 using AIBookingSystem.Data;
 
 using Microsoft.EntityFrameworkCore;
+using NodaTime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +35,7 @@ var app = builder.Build();
             var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
             seeder.SeedUsers(7, 3);
             seeder.SeedRooms(20);
+            seeder.seedBookings(30, new DateTimeOffset(2026, 7, 1, 0, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 12, 31, 0, 0, 0, TimeSpan.Zero));
         }
     }
 

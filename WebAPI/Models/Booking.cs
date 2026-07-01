@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using AIBookingSystem.Enums;
+using NodaTime;
 
 namespace AIBookingSystem.Models
 {
@@ -11,12 +12,13 @@ namespace AIBookingSystem.Models
 
         [ForeignKey("Id")]
         public required int UserId { get; set;}
-        public required User User { get; set;}
+        public User? User { get; set;}
 
         [ForeignKey("Id")]
         public required int RoomId { get; set;}
-        public required Room Room { get; set;}
-        public required DateTime BookingTime {get; set;}
+        public Room? Room { get; set;}
+        public required DateTimeOffset BookingFrom {get; set;}
+        public required DateTimeOffset BookingTo {get; set;}
         public required BookingStatus Status {get; set;}
     }
 }

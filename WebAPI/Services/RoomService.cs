@@ -1,5 +1,6 @@
 using AIBookingSystem.DTO;
 using AIBookingSystem.Repositories;
+using NodaTime;
 
 namespace AIBookingSystem.Services
 {
@@ -107,6 +108,31 @@ namespace AIBookingSystem.Services
                 {
                     return MapRoom2DTO(addedRoom);
                 }
+            }
+            return null;
+        }
+
+        public IEnumerable<RoomDTO>? FindAvailableRoomsbyDateTime(DateTimeOffset from, DateTimeOffset to)
+        {
+            if (to < from)
+            {
+                return null;
+            }
+            if (from < DateTimeOffset.UtcNow)
+            {
+                return null;
+            }
+            if (from.Date != to.Date)
+            {
+                return null;
+            }
+            var rooms = _roomRepo.FindAvailableRoomsbyDateTime(from, to);
+
+            if (rooms != null)
+            {
+                return (IEnumerable<RoomDTO>?) rooms
+                    .ToList()
+                    .Select(r => MapRoom2DTO(r));
             }
             return null;
         }

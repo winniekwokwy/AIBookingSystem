@@ -1,5 +1,7 @@
 using AIBookingSystem.Data;
+using AIBookingSystem.Enums;
 using Microsoft.EntityFrameworkCore;
+using NodaTime;
 
 namespace AIBookingSystem.Repositories
 {
@@ -47,6 +49,34 @@ namespace AIBookingSystem.Repositories
                 }
             }
             return null;
+        }
+
+        public IEnumerable<Room>? FindAvailableRoomsbyDateTime(DateTimeOffset from, DateTimeOffset to)
+        {
+ 
+            if (to < from)
+            {
+                return null;
+            }
+            if (from < DateTimeOffset.UtcNow)
+            {
+                return null;
+            }
+            if (to.Date != from.Date)
+            {
+                return null;
+            }
+
+            return _dBContext.Rooms
+                    .Where(r => !r.Bookings.Any
+                    (
+                        b => b.BookingFrom <= to 
+                        && b.BookingTo >= from
+                        && b.Status == BookingStatus.Confirmed
+                    ))
+                    .Include(r => r.Equipments)
+                    .ToList();
+
         }
 
     }
