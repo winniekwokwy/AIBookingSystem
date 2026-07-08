@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Services;
+using NodaTime;
 
 namespace AIBookingSystem.Controllers
 {
@@ -22,11 +23,11 @@ namespace AIBookingSystem.Controllers
         public ActionResult<IEnumerable<RoomDTO>> ListRooms()
         {
             var rooms = _roomService.ListRooms();
-            if (rooms == null)
+            if (rooms == null || rooms.Count() == 0)
             {
                 string message = "No room is found.";
                 _logger.LogError(message);
-                return NotFound(new { Message = message });
+                return NotFound(message);
             }
 
             return Ok(rooms);
@@ -43,7 +44,7 @@ namespace AIBookingSystem.Controllers
                 {
                     message = $"Room with ID, {id}, not found.";
                     _logger.LogError(message);
-                    return NotFound(new { Message = message });
+                    return NotFound(message);
 
                 }
                 return Ok(room);
@@ -51,7 +52,7 @@ namespace AIBookingSystem.Controllers
 
             message = "Please provide valid Id for getting a room.";
             _logger.LogError(message);
-            return NotFound(new { Message = message });
+            return NotFound(message);
         }
 
         [HttpPost]
@@ -104,6 +105,44 @@ namespace AIBookingSystem.Controllers
             }
             _logger.LogError(message);        
             return BadRequest (message);
+        }
+        
+        [HttpGet]
+        public ActionResult<IEnumerable<RoomDTO>> FindAvailableRoomsbyDateTime(DateTimeOffset from, DateTimeOffset to)
+        {
+            string message = "";
+
+            if (from > to)
+            {
+                message = "To date must be later than From date.";
+            }
+            else
+            {
+                if (from < DateTimeOffset.UtcNow)
+                {
+                    message = "You can only book rooms for future.";
+                }
+                else 
+                {
+                    if (from.Date != to.Date)
+                    {
+                        message = "You cannot book room across 2 days. Please split the booking into 2.";
+                    }
+                    else 
+                    {
+                        var rooms = _roomService.FindAvailableRoomsbyDateTime(from, to);
+                        if (rooms == null || rooms.Count()== 0)
+                        {
+                            message = "No available room is found.";
+                            _logger.LogError(message);
+                            return NotFound(message);
+                        }
+
+                        return Ok(rooms);
+                    }
+                }
+            }
+            return BadRequest(message);
         }
     }
 }

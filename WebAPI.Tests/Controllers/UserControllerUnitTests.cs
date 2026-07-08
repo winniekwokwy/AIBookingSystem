@@ -51,14 +51,34 @@ namespace WebAPI.Tests.Controllers
         }
 
         [Fact]
-        public void ListUsers_NoUsers_ReturnNotFound()
+        public void ListUsers_WhenServiceReturnNull_ReturnNotFound()
         {
+            string expected = "No user is found.";
             _mockUserService.Setup(s => s.ListUsers())
                         .Returns((List<UserDTO>?)null);
 
             var result = _userController.ListUsers();
 
-            Assert.IsType<NotFoundObjectResult>(result.Result); 
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
+            
+        }
+
+        [Fact]
+        public void ListUsers_WhenServiceReturnEmpty_ReturnNotFound()
+        {
+            List<UserDTO> users = [];
+            string expected = "No user is found.";
+            _mockUserService.Setup(s => s.ListUsers())
+                        .Returns((users));
+
+            var result = _userController.ListUsers();
+
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
+            
         }
 
         [Fact]
@@ -85,22 +105,28 @@ namespace WebAPI.Tests.Controllers
         public void GetUserByID_NonExistingUsers_ReturnNotFound()
         {
             int id = 100;
+            string expected = $"User with ID, {id}, not found.";
             _mockUserService.Setup(s => s.GetUserbyID(id))
                         .Returns((UserDTO?)null);
 
             var result = _userController.GetUserByID(id);
 
-            Assert.IsType<NotFoundObjectResult>(result.Result); 
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
         }
 
         [Fact]
         public void GetUserByID_UserwithInvalidID_ReturnNotFound()
         {
             int id = -1;
+            string expected = "Please provide valid Id for getting user.";
 
             var result = _userController.GetUserByID(id);
 
-            Assert.IsType<NotFoundObjectResult>(result.Result); 
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
         }
 
         [Fact]
@@ -126,21 +152,27 @@ namespace WebAPI.Tests.Controllers
         [Fact]
         public void GetUserByUsername_NullUsername_ReturnNotFound()
         {
+            string expected = "Please provide valid user name for getting user.";
             var result = _userController.GetUserByUsername(null!);
 
-            Assert.IsType<NotFoundObjectResult>(result.Result); 
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
         }
 
         [Fact]
         public void GetUserByUsername_NonExistingUsers_ReturnNotFound()
         {
             string username = "AppleMango";
+            string expected = $"User with User name, {username}, is not found.";
             _mockUserService.Setup(s => s.GetUserbyUsername(username))
                         .Returns((UserDTO?)null);
 
             var result = _userController.GetUserByUsername(username);
 
-            Assert.IsType<NotFoundObjectResult>(result.Result); 
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
         }
 
         [Fact]

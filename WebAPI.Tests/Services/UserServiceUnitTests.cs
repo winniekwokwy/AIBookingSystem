@@ -4,6 +4,7 @@ using AIBookingSystem.Enums;
 using AIBookingSystem.DTO;
 
 using Moq;
+using System.Net.Cache;
 
 namespace WebAPI.Tests.Services
 
@@ -422,22 +423,24 @@ namespace WebAPI.Tests.Services
             string role = "Admin";
             string status = "Active";
 
-            _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username))
+            _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username.ToLower()))
                         .Returns(new User
                         {
                             Id = id,
                             Name = name,
-                            UserName = username,
+                            UserName = username.ToLower(),
                             Password = password,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
-            var result = _userService.GetUserbyUsername(username);
-
+            var result = Assert.IsType<UserDTO>(_userService.GetUserbyUsername(username));
             Assert.NotNull(result);
+            var userName = result.UserName;
+
+            Assert.NotNull(userName);
             Assert.Equal(id, result.Id);
             Assert.Equal(name, result.Name);
-            Assert.Equal(username, result.UserName);
+            Assert.Equal(username.ToLower(), userName!.ToLower());
             Assert.Equal(role, result.Role);
             Assert.Equal(status, result.Status);
         }
@@ -452,6 +455,160 @@ namespace WebAPI.Tests.Services
             var result = _userService.GetUserbyUsername(username);
 
             Assert.Null(result);
+        }
+
+        [Fact]
+        public void IsUserValid_ValidUserInputs_ReturnTrue()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "MayNicolaos";
+            string password = "M@yNic01@0s";
+
+            _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
+                        .Returns(new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username.ToLower(),
+                            Password = password,
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        });
+            _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username.ToLower()))
+                        .Returns(new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username.ToLower(),
+                            Password = password,
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        });
+            var result = _userService.IsUserValid(id, username);
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void IsUserValid_InvalidId_ReturnTrue()
+        {
+            int id = -1;
+            string username = "MayNicolaos";
+
+            var result = _userService.IsUserValid(id, username);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsUserValid_UsernameNull_ReturnTrue()
+        {
+            int id = 1;
+            string? username = null;
+
+            var result = _userService.IsUserValid(id, username!);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsUserValid_UsernameEmpty_ReturnTrue()
+        {
+            int id = 1;
+            string username = "";
+
+            var result = _userService.IsUserValid(id, username);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsUserValid_GetUserbyIDReturnNull_ReturnTrue()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "MayNicolaos";
+            string password = "M@yNic01@0s";
+
+            _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
+                        .Returns((User?)null);
+            _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username))
+                        .Returns(new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username,
+                            Password = password,
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        });
+            var result = _userService.IsUserValid(id, username);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsUserValid_GetUserbyUsernameReturnNull_ReturnTrue()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "MayNicolaos";
+            string password = "M@yNic01@0s";
+
+            _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
+                        .Returns(new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username,
+                            Password = password,
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        });
+            _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username))
+                        .Returns((User?)null);
+            var result = _userService.IsUserValid(id, username);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsUserValid_ValidIdNotMatchWithUsername_ReturnFalse()
+        {
+            int id1 = 1;
+            string name1 = "May Nicolaos";
+            string username1 = "MayNicolaos";
+            string password1 = "M@yNic01@0s";
+
+            int id2 = 2;
+            string name2 = "Happy Person";
+            string username2 = "HappyPerson";
+            string password2 = "H@ppyP3rs0n";
+
+            _mockUserRepo.Setup(repo => repo.GetUserbyID(id1))
+                        .Returns(new User
+                        {
+                            Id = id1,
+                            Name = name1,
+                            UserName = username1,
+                            Password = password1,
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        });
+            _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username2))
+                        .Returns(new User
+                        {
+                            Id = id2,
+                            Name = name2,
+                            UserName = username2,
+                            Password = password2,
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        });
+            var result = _userService.IsUserValid(id1, username2);
+
+            Assert.False(result);
         }
     }
 }

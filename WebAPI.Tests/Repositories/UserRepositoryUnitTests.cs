@@ -20,8 +20,8 @@ namespace WebAPI.Tests.Repositories
             if (requiredData)
             {
                 context.Users.AddRange(
-                    new User(){ Id = 1, Name = "Apple Mango", UserName = "AppleMango", Password = "App13M@ng0", Role = UserRoles.Admin, Status = UserStatus.Active},
-                    new User() { Id = 2, Name = "Ben Smith", UserName = "BenSmith", Password = "B3nSmith!", Role = UserRoles.User, Status = UserStatus.Active}
+                    new User(){ Id = 1, Name = "Apple Mango", UserName = "applemango", Password = "App13M@ng0", Role = UserRoles.Admin, Status = UserStatus.Active},
+                    new User() { Id = 2, Name = "Ben Smith", UserName = "bensmith", Password = "B3nSmith!", Role = UserRoles.User, Status = UserStatus.Active}
                 );
 
                 context.SaveChanges();
@@ -33,7 +33,7 @@ namespace WebAPI.Tests.Repositories
         public void IsUserValid_ValidUserIdnCreatedBy_ReturnTrue()
         {
             int id = 1;
-            string createdBy = "AppleMango";
+            string createdBy = "applemango";
             var context = GetInMemoryDbContext(true);
             var repository = new UserRepository(context);
 
@@ -118,7 +118,7 @@ namespace WebAPI.Tests.Repositories
 
             Assert.NotNull(user);
             Assert.Equal("Apple Mango", user.Name);
-            Assert.Equal("AppleMango", user.UserName);
+            Assert.Equal("applemango", user.UserName);
             Assert.Equal(1, user.Id);
             Assert.Equal(UserRoles.Admin, user.Role);
             Assert.Equal(UserStatus.Active, user.Status);
@@ -159,7 +159,7 @@ namespace WebAPI.Tests.Repositories
 
             Assert.NotNull(user);
             Assert.Equal("Apple Mango", user.Name);
-            Assert.Equal("AppleMango", user.UserName);
+            Assert.Equal(username.ToLower(), user.UserName);
             Assert.Equal(1, user.Id);
             Assert.Equal(UserRoles.Admin, user.Role);
             Assert.Equal(UserStatus.Active, user.Status);
@@ -212,20 +212,21 @@ namespace WebAPI.Tests.Repositories
             var user = new User
             {
                 Name = name,
-                UserName = username,
+                UserName = username.ToLower(),
                 Password = password,
                 Role = role,
                 Status = status
             };
 
             var context = GetInMemoryDbContext(false);
+
             var repository = new UserRepository(context);
 
             var addedUser = repository.CreateUser(user);
 
             Assert.NotNull(addedUser);
             Assert.Equal(user.Name, addedUser.Name);
-            Assert.Equal(user.UserName, addedUser.UserName);
+            Assert.Equal(user.UserName.ToLower(), addedUser.UserName);
             Assert.Equal(user.Role, addedUser.Role);
             Assert.Equal(user.Status, addedUser.Status);    
         }

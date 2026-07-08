@@ -10,6 +10,5 @@ namespace AIBookingSystem.DTO
     public required string Description { get; set;}
    
     public ICollection<EquipmentDTO>? Equipments {get; set;} = [];
-    //public ICollection<Booking>? Bookings { get; set; } = [];
     }
 }

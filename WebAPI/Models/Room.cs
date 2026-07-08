@@ -1,4 +1,7 @@
 using AIBookingSystem.Models;
+using Microsoft.EntityFrameworkCore;
+
+[Index(nameof(Name), IsUnique = true)]
 public class Room
 {
     public int Id {get; set;}
