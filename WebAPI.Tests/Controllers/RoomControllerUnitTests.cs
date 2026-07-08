@@ -51,15 +51,33 @@ namespace WebAPI.Tests.Controllers
             }
         }
 
-            [Fact]
-        public void ListRooms_NoRoom_ReturnListOfRoomDTO()
+        [Fact]
+        public void ListRooms_WhenServiceReturnNull_ReturnNotFound()
         {
+            string expected = "No room is found.";
             _mockRoomService.Setup(r => r.ListRooms())
                         .Returns((List<RoomDTO>?)null);
 
             var result = _roomController.ListRooms();
 
-        Assert.IsType<NotFoundObjectResult>(result.Result);
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
+        }
+
+        [Fact]
+        public void ListRooms_WhenServiceReturnEmptyList_ReturnNotFound()
+        {
+            List<RoomDTO> rooms = [];
+            string expected = "No room is found.";
+            _mockRoomService.Setup(r => r.ListRooms())
+                        .Returns(rooms);
+
+            var result = _roomController.ListRooms();
+
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
         }
 
         [Fact]
@@ -101,32 +119,42 @@ namespace WebAPI.Tests.Controllers
         public void GetRoombyID_InvalidId_ReturnNotFound()
         {
             int id = -1;
+            string expected = "Please provide valid Id for getting a room.";
 
             var result = _roomController.GetRoombyID(id);
 
-            Assert.IsType<NotFoundObjectResult>(result.Result); 
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
+
         }
 
         [Fact]
         public void GetRoombyID_NonExistingId_ReturnNotFound()
         {
             int id = 999;
+            string expected = $"Room with ID, {id}, not found.";
 
             _mockRoomService.Setup(s => s.GetRoombyID(id))
                             .Returns((RoomDTO?) null);
             var result = _roomController.GetRoombyID(id);
 
-            Assert.IsType<NotFoundObjectResult>(result.Result); 
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value); 
         }    
 
         [Fact]
         public void GetRoombyID_IdIsZero_ReturnNotFound()
         {
             int id = 0;
+            string expected = "Please provide valid Id for getting a room.";
 
             var result = _roomController.GetRoombyID(id);
-
-            Assert.IsType<NotFoundObjectResult>(result.Result); 
+      
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);       
         }   
 
         [Fact]
@@ -465,6 +493,7 @@ namespace WebAPI.Tests.Controllers
                 
             DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
             DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+
             _mockRoomService.Setup(s => s.FindAvailableRoomsbyDateTime(from, to))
                             .Returns(rooms);
             var result = _roomController.FindAvailableRoomsbyDateTime(from, to);
@@ -525,7 +554,7 @@ namespace WebAPI.Tests.Controllers
         }
 
         [Fact]
-        public void FindAvailableRoomsbyDateTime_ValidPeriodServiceReturnNull_ReturnNull()
+        public void FindAvailableRoomsbyDateTime_WhenServiceReturnNull_ReturnNull()
         {
             string expected = "No available room is found.";
                 
@@ -535,6 +564,22 @@ namespace WebAPI.Tests.Controllers
                             .Returns((List<RoomDTO>?)null);
             var result = _roomController.FindAvailableRoomsbyDateTime(from, to);
             
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
+        }
+
+        [Fact]
+        public void FindAvailableRoomsbyDateTime_WhenServiceReturnEmpty_ReturnEmptyList()
+        {
+            string expected = "No available room is found.";
+            List<RoomDTO> rooms = [];                
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+            _mockRoomService.Setup(s => s.FindAvailableRoomsbyDateTime(from, to))
+                            .Returns(rooms);
+            var result = _roomController.FindAvailableRoomsbyDateTime(from, to);
+           
             var notFoundResult = result.Result as NotFoundObjectResult;
             Assert.IsType<NotFoundObjectResult>(notFoundResult);
             Assert.Equal(expected, notFoundResult.Value);

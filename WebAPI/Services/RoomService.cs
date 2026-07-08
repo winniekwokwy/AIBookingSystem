@@ -136,5 +136,26 @@ namespace AIBookingSystem.Services
             }
             return null;
         }
+
+        public bool IsRoomAvailable(int roomId, DateTimeOffset from, DateTimeOffset to)
+        {
+            if (to < from)
+            {
+                return false;
+            }
+            if (from < DateTimeOffset.UtcNow)
+            {
+                return false;
+            }
+            if (from.Date != to.Date)
+            {
+                return false;
+            }
+            if (roomId <= 0)
+            {
+                return false;
+            }
+            return _roomRepo.IsRoomAvailable(roomId, from, to);
+        }
     }
 }

@@ -11,5 +11,6 @@ namespace AIBookingSystem.Services
         RoomDTO? CreateRoom(RoomCreateDTO room);
 
         IEnumerable<RoomDTO>? FindAvailableRoomsbyDateTime(DateTimeOffset from, DateTimeOffset to);
+        bool IsRoomAvailable(int roomId, DateTimeOffset from, DateTimeOffset to);
     }
 }

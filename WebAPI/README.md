@@ -56,7 +56,7 @@ For Data Annotations, https://learn.microsoft.com/en-us/ef/ef6/modeling/code-fir
 
     For returning proper API response, refer to https://codewithmukesh.com/blog/http-status-codes-aspnet-core-api-responses/
 
-8. PostgreSQL DateTime (https://medium.com/turbo-net/using-nodatime-a-better-approach-to-date-and-time-in-net-a2fed59d5585)
+8. PostgreSQL DateTime (https://medium.com/turbo-net/using-nodatime-a-better-approach-to-date-and-time-in-net-a2fed59d5585; https://www.npgsql.org/doc/types/datetime.html)
 
 9. Query dbSet (https://www.csharptutorial.net/entity-framework-core-tutorial/)
 

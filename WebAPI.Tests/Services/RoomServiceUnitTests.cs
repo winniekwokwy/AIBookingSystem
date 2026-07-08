@@ -456,7 +456,7 @@ namespace WebAPI.Tests.Services
         }
 
         [Fact]
-        public void FindAvailableRoomsbyDateTime_ValidPeriodRepoReturnNull_ReturnNull()
+        public void FindAvailableRoomsbyDateTime_WhenRepoReturnNull_ReturnNull()
         {    
             DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
             DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
@@ -465,6 +465,94 @@ namespace WebAPI.Tests.Services
             var result = _roomService.FindAvailableRoomsbyDateTime(from, to);
             
             Assert.Null(result);          
+        }
+
+        [Fact]
+        public void FindAvailableRoomsbyDateTime_WhenRepoReturnEmpty_ReturnEmptyList()
+        {    
+            List<Room> rooms = [];
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+            _mockRoomRepo.Setup(repo => repo.FindAvailableRoomsbyDateTime(from, to))
+                            .Returns(rooms);
+            var result = _roomService.FindAvailableRoomsbyDateTime(from, to);
+            
+            Assert.NotNull(result);
+            Assert.Empty(result);          
+        }
+
+        [Fact]
+        public void IsRoomAvailable_RoomAvailableWithValidInput_ReturnTrue()
+        {
+            int roomId = 1;
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+            _mockRoomRepo.Setup(repo => repo.IsRoomAvailable(roomId, from, to))
+                            .Returns(true);
+            var result = _roomService.IsRoomAvailable(roomId, from, to);
+            
+            Assert.True(result);         
+        }
+
+        [Fact]
+        public void IsRoomAvailable_RoomNotAvailableWithValidInput_ReturnFalse()
+        {
+            int roomId = 1;
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+            _mockRoomRepo.Setup(repo => repo.IsRoomAvailable(roomId, from, to))
+                            .Returns(false);
+            var result = _roomService.IsRoomAvailable(roomId, from, to);
+            
+            Assert.False(result);         
+        }
+
+        [Fact]
+        public void IsRoomAvailable_InvalidPeriod_ReturnFalse()
+        {
+            int roomId = 1;
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+
+            var result = _roomService.IsRoomAvailable(roomId, from, to);
+            
+            Assert.False(result);         
+        }
+
+        [Fact]
+        public void IsRoomAvailable_PeriodInThePast_ReturnFalse()
+        {
+            int roomId = 1;
+            DateTimeOffset from = new DateTimeOffset(2025, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2025, 12, 20, 15, 30, 0, TimeSpan.Zero);
+
+            var result = _roomService.IsRoomAvailable(roomId, from, to);
+            
+            Assert.False(result);         
+        }
+
+        [Fact]
+        public void IsRoomAvailable_FromNToNotOnTheSameDay_ReturnFalse()
+        {
+            int roomId = 1;
+            DateTimeOffset from = new DateTimeOffset(2025, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2025, 12, 21, 15, 30, 0, TimeSpan.Zero);
+
+            var result = _roomService.IsRoomAvailable(roomId, from, to);
+            
+            Assert.False(result);         
+        }
+
+        [Fact]
+        public void IsRoomAvailable_InvalidRoomId_ReturnFalse()
+        {
+            int roomId = -1;
+            DateTimeOffset from = new DateTimeOffset(2025, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2025, 12, 21, 15, 30, 0, TimeSpan.Zero);
+
+            var result = _roomService.IsRoomAvailable(roomId, from, to);
+            
+            Assert.False(result);         
         }
     }
 }

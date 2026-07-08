@@ -23,11 +23,11 @@ namespace AIBookingSystem.Controllers
         public ActionResult<IEnumerable<RoomDTO>> ListRooms()
         {
             var rooms = _roomService.ListRooms();
-            if (rooms == null)
+            if (rooms == null || rooms.Count() == 0)
             {
                 string message = "No room is found.";
                 _logger.LogError(message);
-                return NotFound(new { Message = message });
+                return NotFound(message);
             }
 
             return Ok(rooms);
@@ -44,7 +44,7 @@ namespace AIBookingSystem.Controllers
                 {
                     message = $"Room with ID, {id}, not found.";
                     _logger.LogError(message);
-                    return NotFound(new { Message = message });
+                    return NotFound(message);
 
                 }
                 return Ok(room);
@@ -52,7 +52,7 @@ namespace AIBookingSystem.Controllers
 
             message = "Please provide valid Id for getting a room.";
             _logger.LogError(message);
-            return NotFound(new { Message = message });
+            return NotFound(message);
         }
 
         [HttpPost]
@@ -131,7 +131,7 @@ namespace AIBookingSystem.Controllers
                     else 
                     {
                         var rooms = _roomService.FindAvailableRoomsbyDateTime(from, to);
-                        if (rooms == null)
+                        if (rooms == null || rooms.Count()== 0)
                         {
                             message = "No available room is found.";
                             _logger.LogError(message);

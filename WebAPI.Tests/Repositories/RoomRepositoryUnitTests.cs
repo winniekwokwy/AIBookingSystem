@@ -12,6 +12,7 @@ namespace WebAPI.Tests.Repositories
     public class RoomRepositoryUnitTests
     {
         // Helper method that creates a fresh, isolated ApplicationDbContext using EF Core InMemory provider
+        
         private RoomBookingDbContext GetInMemoryDbContext(bool requiredData)
         {
             var options = new DbContextOptionsBuilder<RoomBookingDbContext>()
@@ -270,7 +271,7 @@ namespace WebAPI.Tests.Repositories
         }      
 
         [Fact]
-        public void FindAvailableRoomsbyDateTime_BookingsAtRequestPeriod_ReturnListofAvailableRooms()
+        public void FindAvailableRoomsbyDateTime_BookingsPartiallyAtRequestPeriod_ReturnListofAvailableRooms()
         {
             Room room1 = new Room() { Id = 1, Name = "Mongkok", Floor = 2, Capacity = 5, Description = "This room is located at 2/F which can accommodate 5 people."};
             Room room2 = new Room() { Id = 2, Name = "Tai wai", Floor = 3, Capacity = 8, Description = "This room is located at 3/F which can accommodate 8 people."};
@@ -280,6 +281,37 @@ namespace WebAPI.Tests.Repositories
                              new Booking{Id = 2, RoomId = 1, BookedBy = "MarySmith", UserId = 2, BookingFrom = new DateTimeOffset(2026, 7, 20, 10, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}   
                                 ];    
             DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+     
+            var context = GetInMemoryDbContext(false);
+
+            context.Rooms.AddRange(room1, room2, room3);
+            context.SaveChanges();
+
+            var repository = new RoomRepository(context);
+            var result = repository.FindAvailableRoomsbyDateTime(from, to);
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count());
+            if (result.Count()>0)
+            {
+                Assert.Equal(room2.Name, result.First().Name);
+                Assert.Equal(room2.Floor, result.First().Floor);
+                Assert.Equal(room2.Capacity, result.First().Capacity);
+                Assert.Equal(room2.Description, result.First().Description);
+            } 
+        }
+
+        [Fact]
+        public void FindAvailableRoomsbyDateTime_BookingsFullyAtRequestPeriod_ReturnListofAvailableRooms()
+        {
+            Room room1 = new Room() { Id = 1, Name = "Mongkok", Floor = 2, Capacity = 5, Description = "This room is located at 2/F which can accommodate 5 people."};
+            Room room2 = new Room() { Id = 2, Name = "Tai wai", Floor = 3, Capacity = 8, Description = "This room is located at 3/F which can accommodate 8 people."};
+            Room room3 = new Room() { Id = 3, Name = "Shatin", Floor = 5, Capacity = 8, Description = "This room is located at 5/F which can accommodate 8 people."};
+
+            room1.Bookings = [new Booking{Id = 1, RoomId = 1, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed},
+                             new Booking{Id = 2, RoomId = 1, BookedBy = "MarySmith", UserId = 2, BookingFrom = new DateTimeOffset(2026, 7, 20, 10, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}   
+                                ];    
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 13, 30, 0, TimeSpan.Zero);
             DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
      
             var context = GetInMemoryDbContext(false);
@@ -332,6 +364,32 @@ namespace WebAPI.Tests.Repositories
         }    
 
         [Fact]
+        public void FindAvailableRoomsbyDateTime_NoAvailableRoom_ReturnEmptyList()
+        {
+            Room room1 = new Room() { Id = 1, Name = "Mongkok", Floor = 2, Capacity = 5, Description = "This room is located at 2/F which can accommodate 5 people."};
+            Room room2 = new Room() { Id = 2, Name = "Tai wai", Floor = 3, Capacity = 8, Description = "This room is located at 3/F which can accommodate 8 people."};
+            Room room3 = new Room() { Id = 3, Name = "Shatin", Floor = 5, Capacity = 8, Description = "This room is located at 5/F which can accommodate 8 people."};
+
+            room1.Bookings = [new Booking{Id = 1, RoomId = 1, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed},
+                             new Booking{Id = 2, RoomId = 1, BookedBy = "MarySmith", UserId = 2, BookingFrom = new DateTimeOffset(2026, 7, 20, 10, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}   
+                                ];    
+            room2.Bookings = [new Booking{Id = 3, RoomId = 2, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];   
+            room3.Bookings = [new Booking{Id = 4, RoomId = 3, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 15, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 16, 15, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];   
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero);
+     
+            var context = GetInMemoryDbContext(false);
+
+            context.Rooms.AddRange(room1, room2, room3);
+            context.SaveChanges();
+
+            var repository = new RoomRepository(context);
+            var result = repository.FindAvailableRoomsbyDateTime(from, to);
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }   
+
+        [Fact]
         public void FindAvailableRoomsbyDateTime_InvalidPeriod_ReturnNull()
         {
 
@@ -369,5 +427,158 @@ namespace WebAPI.Tests.Repositories
             var result = repository.FindAvailableRoomsbyDateTime(from, to);
             Assert.Null(result);
         }  
+
+        [Fact]
+        public void IsRoomAvailable_RoomAvailableWithValidInput_ReturnTrue()
+        {
+
+            Room room1 = new Room() { Id = 1, Name = "Mongkok", Floor = 2, Capacity = 5, Description = "This room is located at 2/F which can accommodate 5 people."};
+            Room room2 = new Room() { Id = 2, Name = "Tai wai", Floor = 3, Capacity = 8, Description = "This room is located at 3/F which can accommodate 8 people."};
+            Room room3 = new Room() { Id = 3, Name = "Shatin", Floor = 5, Capacity = 8, Description = "This room is located at 5/F which can accommodate 8 people."};
+
+            room1.Bookings = [new Booking{Id = 1, RoomId = 1, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed},
+                             new Booking{Id = 2, RoomId = 1, BookedBy = "MarySmith", UserId = 2, BookingFrom = new DateTimeOffset(2026, 7, 20, 10, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}   
+                                ];    
+            room2.Bookings = [new Booking{Id = 3, RoomId = 2, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];   
+            room3.Bookings = [new Booking{Id = 4, RoomId = 3, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 15, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 16, 15, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}]; 
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 12, 00, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 13, 00, 0, TimeSpan.Zero);
+     
+            var context = GetInMemoryDbContext(false);
+            var repository = new RoomRepository(context);
+
+            context.Rooms.AddRange(room1, room2, room3);
+            context.SaveChanges();
+
+            var result = repository.IsRoomAvailable(1, from, to);
+            Assert.True(result);
+        }  
+
+        [Fact]
+        public void IsRoomAvailable_RoomNotAvailableWithValidInput_ReturnFalse()
+        {
+
+            Room room1 = new Room() { Id = 1, Name = "Mongkok", Floor = 2, Capacity = 5, Description = "This room is located at 2/F which can accommodate 5 people."};
+            Room room2 = new Room() { Id = 2, Name = "Tai wai", Floor = 3, Capacity = 8, Description = "This room is located at 3/F which can accommodate 8 people."};
+            Room room3 = new Room() { Id = 3, Name = "Shatin", Floor = 5, Capacity = 8, Description = "This room is located at 5/F which can accommodate 8 people."};
+
+            room1.Bookings = [new Booking{Id = 1, RoomId = 1, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed},
+                             new Booking{Id = 2, RoomId = 1, BookedBy = "MarySmith", UserId = 2, BookingFrom = new DateTimeOffset(2026, 7, 20, 10, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}   
+                                ];    
+            room2.Bookings = [new Booking{Id = 3, RoomId = 2, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];   
+            room3.Bookings = [new Booking{Id = 4, RoomId = 3, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 15, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 16, 15, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}]; 
+            DateTimeOffset from = new DateTimeOffset(2026, 07, 20, 10, 00, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 07, 20, 11, 00, 0, TimeSpan.Zero);
+     
+            var context = GetInMemoryDbContext(false);
+
+            context.Rooms.AddRange(room1, room2, room3);
+            context.SaveChanges();
+
+            var repository = new RoomRepository(context);
+
+            var result = repository.IsRoomAvailable(1, from, to);
+            Assert.False(result);
+        }  
+
+        [Fact]
+        public void IsRoomAvailable_InvalidPeriod_ReturnFalse()
+        {
+
+            Room room1 = new Room() { Id = 1, Name = "Mongkok", Floor = 2, Capacity = 5, Description = "This room is located at 2/F which can accommodate 5 people."};
+            Room room2 = new Room() { Id = 2, Name = "Tai wai", Floor = 3, Capacity = 8, Description = "This room is located at 3/F which can accommodate 8 people."};
+            Room room3 = new Room() { Id = 3, Name = "Shatin", Floor = 5, Capacity = 8, Description = "This room is located at 5/F which can accommodate 8 people."};
+
+            room1.Bookings = [new Booking{Id = 1, RoomId = 1, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed},
+                             new Booking{Id = 2, RoomId = 1, BookedBy = "MarySmith", UserId = 2, BookingFrom = new DateTimeOffset(2026, 7, 20, 10, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];    
+            room2.Bookings = [new Booking{Id = 3, RoomId = 2, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];   
+            room3.Bookings = [new Booking{Id = 4, RoomId = 3, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 15, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 16, 15, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}]; 
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 20, 10, 00, 0, TimeSpan.Zero);
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 11, 00, 0, TimeSpan.Zero);
+     
+            var context = GetInMemoryDbContext(false);
+            var repository = new RoomRepository(context);
+
+            context.Rooms.AddRange(room1, room2, room3);
+            context.SaveChanges();
+
+            var result = repository.IsRoomAvailable(1, from, to);
+            Assert.False(result);
+        }  
+
+        [Fact]
+        public void IsRoomAvailable_PeriodInThePast_ReturnFalse()
+        {
+
+            Room room1 = new Room() { Id = 1, Name = "Mongkok", Floor = 2, Capacity = 5, Description = "This room is located at 2/F which can accommodate 5 people."};
+            Room room2 = new Room() { Id = 2, Name = "Tai wai", Floor = 3, Capacity = 8, Description = "This room is located at 3/F which can accommodate 8 people."};
+            Room room3 = new Room() { Id = 3, Name = "Shatin", Floor = 5, Capacity = 8, Description = "This room is located at 5/F which can accommodate 8 people."};
+
+            room1.Bookings = [new Booking{Id = 1, RoomId = 1, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed},
+                             new Booking{Id = 2, RoomId = 1, BookedBy = "MarySmith", UserId = 2, BookingFrom = new DateTimeOffset(2026, 7, 20, 10, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];    
+            room2.Bookings = [new Booking{Id = 3, RoomId = 2, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];   
+            room3.Bookings = [new Booking{Id = 4, RoomId = 3, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 15, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 16, 15, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}]; 
+            DateTimeOffset from = new DateTimeOffset(2025, 12, 20, 10, 00, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2025, 12, 20, 11, 00, 0, TimeSpan.Zero);
+     
+            var context = GetInMemoryDbContext(false);
+            var repository = new RoomRepository(context);
+
+            context.Rooms.AddRange(room1, room2, room3);
+            context.SaveChanges();
+
+            var result = repository.IsRoomAvailable(1, from, to);
+            Assert.False(result);
+        }  
+
+        [Fact]
+        public void IsRoomAvailable_PeriodNotOnTheSameDay_ReturnFalse()
+        {
+
+            Room room1 = new Room() { Id = 1, Name = "Mongkok", Floor = 2, Capacity = 5, Description = "This room is located at 2/F which can accommodate 5 people."};
+            Room room2 = new Room() { Id = 2, Name = "Tai wai", Floor = 3, Capacity = 8, Description = "This room is located at 3/F which can accommodate 8 people."};
+            Room room3 = new Room() { Id = 3, Name = "Shatin", Floor = 5, Capacity = 8, Description = "This room is located at 5/F which can accommodate 8 people."};
+
+            room1.Bookings = [new Booking{Id = 1, RoomId = 1, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed},
+                             new Booking{Id = 2, RoomId = 1, BookedBy = "MarySmith", UserId = 2, BookingFrom = new DateTimeOffset(2026, 7, 20, 10, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];    
+            room2.Bookings = [new Booking{Id = 3, RoomId = 2, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];   
+            room3.Bookings = [new Booking{Id = 4, RoomId = 3, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 15, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 16, 15, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}]; 
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 10, 00, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 21, 11, 00, 0, TimeSpan.Zero);
+     
+            var context = GetInMemoryDbContext(false);
+            var repository = new RoomRepository(context);
+
+            context.Rooms.AddRange(room1, room2, room3);
+            context.SaveChanges();
+
+            var result = repository.IsRoomAvailable(1, from, to);
+            Assert.False(result);
+        }  
+
+        [Fact]
+        public void IsRoomAvailable_InvalidRoomId_ReturnFalse()
+        {
+
+            Room room1 = new Room() { Id = 1, Name = "Mongkok", Floor = 2, Capacity = 5, Description = "This room is located at 2/F which can accommodate 5 people."};
+            Room room2 = new Room() { Id = 2, Name = "Tai wai", Floor = 3, Capacity = 8, Description = "This room is located at 3/F which can accommodate 8 people."};
+            Room room3 = new Room() { Id = 3, Name = "Shatin", Floor = 5, Capacity = 8, Description = "This room is located at 5/F which can accommodate 8 people."};
+
+            room1.Bookings = [new Booking{Id = 1, RoomId = 1, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed},
+                             new Booking{Id = 2, RoomId = 1, BookedBy = "MarySmith", UserId = 2, BookingFrom = new DateTimeOffset(2026, 7, 20, 10, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];    
+            room2.Bookings = [new Booking{Id = 3, RoomId = 2, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 30, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 30, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}];   
+            room3.Bookings = [new Booking{Id = 4, RoomId = 3, BookedBy = "HenrySmith", UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 15, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 16, 15, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed}]; 
+            DateTimeOffset from = new DateTimeOffset(2026, 12, 20, 10, 00, 0, TimeSpan.Zero);
+            DateTimeOffset to = new DateTimeOffset(2026, 12, 21, 11, 00, 0, TimeSpan.Zero);
+     
+            var context = GetInMemoryDbContext(false);
+            var repository = new RoomRepository(context);
+
+            context.Rooms.AddRange(room1, room2, room3);
+            context.SaveChanges();
+
+            var result = repository.IsRoomAvailable(-1, from, to);
+            Assert.False(result);
+        } 
     }
 }
