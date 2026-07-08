@@ -18,7 +18,7 @@ public class DataSeeder
     {
             var userFaker = new Faker<User>()
                 .RuleFor(u => u.Name, f => f.Name.FirstName())
-                .RuleFor(u => u.UserName, f => f.Internet.UserName())
+                .RuleFor(u => u.UserName, f => f.Internet.UserName().ToLower())
                 .RuleFor(u => u.Password, f => "@bcd3fgh")
                 .RuleFor(u => u.Role, f => typeOfUser)
                 .RuleFor(u => u.Status, f => UserStatus.Active);
