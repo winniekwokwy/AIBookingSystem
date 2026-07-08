@@ -1,5 +1,7 @@
 using AIBookingSystem.Data;
+using AIBookingSystem.Enums;
 using Microsoft.EntityFrameworkCore;
+using NodaTime;
 
 namespace AIBookingSystem.Repositories
 {
@@ -20,15 +22,9 @@ namespace AIBookingSystem.Repositories
 
         public Room? GetRoombyID(int id)
         {
-            var room = _dBContext.Rooms
+           return _dBContext.Rooms
                         .Include(r => r.Equipments)
                         .FirstOrDefault(r => r.Id == id);
-            if (room == null)
-            {
-                return null;
-            }
-
-            return room;
         }
 
 
@@ -39,14 +35,66 @@ namespace AIBookingSystem.Repositories
                 _dBContext.Rooms.Add(room);
                 _dBContext.SaveChanges();
 
-                var addedRoom = _dBContext.Rooms.FirstOrDefault(r => r.Id == room.Id);
+                return _dBContext.Rooms.FirstOrDefault(r => r.Id == room.Id);
 
-                if (addedRoom != null)
-                {
-                    return addedRoom;
-                }
             }
             return null;
+        }
+
+        public IEnumerable<Room>? FindAvailableRoomsbyDateTime(DateTimeOffset from, DateTimeOffset to)
+        {
+ 
+            if (to < from)
+            {
+                return null;
+            }
+            if (from < DateTimeOffset.UtcNow)
+            {
+                return null;
+            }
+            if (to.Date != from.Date)
+            {
+                return null;
+            }
+
+            return _dBContext.Rooms
+                    .Where(r => !r.Bookings.Any
+                    (
+                        b => b.BookingFrom <= to 
+                        && b.BookingTo >= from
+                        && b.Status == BookingStatus.Confirmed
+                    ))
+                    .Include(r => r.Equipments)
+                    .ToList();
+
+        }
+
+        public bool IsRoomAvailable(int roomId, DateTimeOffset from, DateTimeOffset to)
+        {
+ 
+            if (to < from)
+            {
+                return false;
+            }
+            if (from < DateTimeOffset.UtcNow)
+            {
+                return false;
+            }
+            if (to.Date != from.Date)
+            {
+                return false;
+            }
+            if (roomId <= 0)
+            {
+                return false;
+            }
+            return _dBContext.Rooms
+                        .Where(r => r.Id == roomId)
+                        .All(r => !r.Bookings.Any
+                        (   b => b.BookingFrom <= to 
+                            && b.BookingTo >= from
+                            && b.Status == BookingStatus.Confirmed
+                        ));
         }
 
     }

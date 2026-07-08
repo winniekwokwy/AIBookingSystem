@@ -3,6 +3,7 @@ using System;
 using AIBookingSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AIBookingSystem.Migrations
 {
     [DbContext(typeof(RoomBookingDbContext))]
-    partial class RoomBookingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629114309_SplitBookingTimeIntoFromNToInBooking")]
+    partial class SplitBookingTimeIntoFromNToInBooking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,10 +37,10 @@ namespace AIBookingSystem.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("BookingFrom")
+                    b.Property<DateTime>("BookingFrom")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTimeOffset>("BookingTo")
+                    b.Property<DateTime>("BookingTo")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("RoomId")

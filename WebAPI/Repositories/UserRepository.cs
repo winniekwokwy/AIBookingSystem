@@ -14,7 +14,7 @@ namespace AIBookingSystem.Repositories
         {
             if (username != null)
             {
-                if (GetUserbyUsername(username)!= null)
+                if (GetUserbyUsername(username.ToLower())!= null)
                 {
                     return true;
                 }
@@ -22,19 +22,19 @@ namespace AIBookingSystem.Repositories
             return false;
         }
 
-        public bool IsUserValid(int userId, string createdBy)
+        public bool IsUserValid(int userId, string bookedBy)
         {
             if (userId <= 0)
             {
                 return false;
             }
-            else if (createdBy == null || createdBy == "") 
+            else if (bookedBy == null || bookedBy == "") 
             {
                 return false;
             }
             else
             {
-                var userFound = _dBContext.Users.FirstOrDefault(u => u.UserName == createdBy);
+                var userFound = _dBContext.Users.FirstOrDefault(u => u.UserName == bookedBy.ToLower());
 
                 if (userFound != null)
                 {
@@ -56,26 +56,17 @@ namespace AIBookingSystem.Repositories
         
         public User? GetUserbyID(int id)
         {
-            var user = _dBContext.Users.FirstOrDefault(u => u.Id == id);
-            if (user == null)
-            {
-                return null;
-            }
-
-            return user;
+            return _dBContext.Users.FirstOrDefault(u => u.Id == id);
         }
 
         public User? GetUserbyUsername(string userName)
         {
 
-            var user = _dBContext.Users.FirstOrDefault(u => u.UserName == userName);
-
-            if (user == null)
+            if (userName != null)
             {
-                return null;
+                return _dBContext.Users.FirstOrDefault(u => u.UserName == userName.ToLower());
             }
-            
-            return user;
+            return null;
         }
 
         public User? CreateUser(User user)
@@ -87,12 +78,7 @@ namespace AIBookingSystem.Repositories
                     _dBContext.Users.Add(user);
                     _dBContext.SaveChanges();
 
-                    var addedUser = _dBContext.Users.FirstOrDefault(u => u.UserName == user.UserName);
-
-                    if (addedUser != null)
-                    {
-                        return addedUser;
-                    }
+                    return _dBContext.Users.FirstOrDefault(u => u.UserName == user.UserName.ToLower());
                 }
             }
             return null;

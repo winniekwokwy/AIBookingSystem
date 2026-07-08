@@ -18,5 +18,7 @@ namespace AIBookingSystem.Services
 
         UserStatus StatusMappingString2Enum(string status);
 
+        bool IsUserValid(int id, string username);
+
     }
 }

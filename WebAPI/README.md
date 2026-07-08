@@ -56,7 +56,11 @@ For Data Annotations, https://learn.microsoft.com/en-us/ef/ef6/modeling/code-fir
 
     For returning proper API response, refer to https://codewithmukesh.com/blog/http-status-codes-aspnet-core-api-responses/
 
-8. Testing web api (https://medium.com/@parserdigital/testing-asp-net-core-8-0-apis-a-comprehensive-guide-42dc3b2a751a)
+8. PostgreSQL DateTime (https://medium.com/turbo-net/using-nodatime-a-better-approach-to-date-and-time-in-net-a2fed59d5585; https://www.npgsql.org/doc/types/datetime.html)
+
+9. Query dbSet (https://www.csharptutorial.net/entity-framework-core-tutorial/)
+
+10. Testing web api (https://medium.com/@parserdigital/testing-asp-net-core-8-0-apis-a-comprehensive-guide-42dc3b2a751a)
 
 For unit tests, https://www.c-sharpcorner.com/article/unit-testing-for-a-net-web-api-project/; https://dotnettutorials.net/lesson/unit-testing-service-layer-asp-net-core-web-api/; https://medium.com/@codebob75/unit-testing-in-c-with-xunit-complete-guide-18ee2b919b05
 

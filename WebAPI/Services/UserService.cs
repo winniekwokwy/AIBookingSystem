@@ -1,6 +1,7 @@
 using AIBookingSystem.DTO;
 using AIBookingSystem.Enums;
 using AIBookingSystem.Repositories;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AIBookingSystem.Services
 {
@@ -134,7 +135,7 @@ namespace AIBookingSystem.Services
         public UserDTO? GetUserbyUsername(string userName)
         {
 
-            var user = _userRepo.GetUserbyUsername(userName);
+            var user = _userRepo.GetUserbyUsername(userName.ToLower());
 
             if (user == null)
             {
@@ -154,7 +155,7 @@ namespace AIBookingSystem.Services
                         var newUser = new User
                                         {
                                             Name = user.Name,
-                                            UserName = user.UserName,
+                                            UserName = user.UserName.ToLower(),
                                             Role = RoleMappingString2Enum(user.Role),
                                             Password = user.Password,
                                             Status = StatusMappingString2Enum(user.Status)
@@ -172,5 +173,24 @@ namespace AIBookingSystem.Services
             return null;
         }
 
+        public bool IsUserValid(int id, string username)
+        {
+            if (id <= 0 || username == null || username == "")
+            {
+                return false;
+            }
+
+            var foundUserById = GetUserbyID(id);
+            var foundUserByUsername = GetUserbyUsername(username.ToLower());
+            if (foundUserById ==null || foundUserByUsername == null)
+            {
+                return false;
+            }
+            if (foundUserById.Id != foundUserByUsername.Id || foundUserById.UserName != foundUserByUsername.UserName)
+            {
+                return false;
+            }
+            return true;
+        }
     }
 }

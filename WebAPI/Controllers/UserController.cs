@@ -22,11 +22,11 @@ namespace AIBookingSystem.Controllers
         public ActionResult<IEnumerable<UserDTO>> ListUsers()
         {
             var users = _userService.ListUsers();
-            if (users == null)
+            if (users == null || users.Count() == 0)
             {
                 string message = "No user is found.";
                 _logger.LogError(message);
-                return NotFound(new { Message = message });
+                return NotFound(message);
             }
 
             return Ok(users);
@@ -43,7 +43,7 @@ namespace AIBookingSystem.Controllers
                 {
                     message = $"User with ID, {id}, not found.";
                     _logger.LogError(message);
-                    return NotFound(new { Message = message });
+                    return NotFound(message);
 
                 }
                 return Ok(user);
@@ -51,7 +51,7 @@ namespace AIBookingSystem.Controllers
 
             message = "Please provide valid Id for getting user.";
             _logger.LogError(message);
-            return NotFound(new { Message = message });
+            return NotFound(message);
         }
 
         [HttpGet]
@@ -66,14 +66,14 @@ namespace AIBookingSystem.Controllers
                     
                     message = $"User with User name, {userName}, is not found.";
                     _logger.LogError(message);
-                    return NotFound(new { Message = message });
+                    return NotFound(message);
 
                 }
                 return Ok(user);
             }
             message = "Please provide valid user name for getting user.";
             _logger.LogError(message);        
-            return NotFound(new { Message = message });
+            return NotFound(message);
         }
 
         [HttpPost]
