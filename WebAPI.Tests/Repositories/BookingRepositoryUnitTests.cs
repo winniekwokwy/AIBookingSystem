@@ -107,7 +107,7 @@ namespace WebAPI.Tests.Repositories
         }
 
         [Fact]
-        public void BookRoom_ValidId_ReturnBooking()
+        public void GetBookingbyID_ValidId_ReturnBooking()
         {
             int id = 1;
 
@@ -124,7 +124,7 @@ namespace WebAPI.Tests.Repositories
         }
 
         [Fact]
-        public void BookRoom_InvalidId_ReturnNull()
+        public void GetBookingbyID_InvalidId_ReturnNull()
         {
             int id = -1;
 
@@ -134,5 +134,32 @@ namespace WebAPI.Tests.Repositories
 
             Assert.Null(result);
         }
+
+        [Fact]
+        public void CancelBooking_ValidId_ReturnBooking()
+        {
+            int id = 2;
+
+            var context = GetInMemoryDbContext(true);
+            var repository = new BookingRepository(context);
+            var result = repository.CancelBooking(id);
+
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Id);
+            Assert.Equal(BookingStatus.Cancelled, result.Status);   
+        }
+
+        [Fact]
+        public void CancelBooking_InvalidId_ReturnNull()
+        {
+            int id = -2;
+
+            var context = GetInMemoryDbContext(true);
+            var repository = new BookingRepository(context);
+            var result = repository.CancelBooking(id);
+
+            Assert.Null(result);
+        }
+
     }
 }

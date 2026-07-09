@@ -124,7 +124,7 @@ public class DataSeeder
                     if (users != null)
                     {
                         index = random.Next(0, users.Count);
-                        booking.BookedBy = ((User) users[index]).UserName;
+                        booking.BookedBy = ((User) users[index]).UserName.ToLower();
                         booking.UserId = ((User) users[index]).Id;
                     }
                     else{
