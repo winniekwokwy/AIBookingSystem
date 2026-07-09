@@ -540,5 +540,107 @@ namespace WebAPI.Tests.Services
 
             Assert.Null(result);
         }
+
+        [Fact]
+        public void CancelBooking_ValidId_ReturnBookingDTO()
+        {
+            int id = 1;
+            int roomId = 1;
+            string bookedBy = "HenrySmith";
+            int userId = 1;
+            DateTimeOffset bookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero);
+            DateTimeOffset bookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero);
+            string  status = "Cancelled";
+
+            var booking = new Booking{Id = id, RoomId = roomId, BookedBy = bookedBy.ToLower(), UserId = userId, BookingFrom = bookingFrom, BookingTo = bookingTo, Status = BookingStatus.Confirmed}; 
+            var updatedBooking = new Booking{Id = id, RoomId = roomId, BookedBy = bookedBy.ToLower(), UserId = userId, BookingFrom = bookingFrom, BookingTo = bookingTo, Status = BookingStatus.Cancelled}; 
+ 
+            _mockBookingRepo.Setup(m => m.GetBookingbyID(id))
+                            .Returns(booking);
+            _mockBookingRepo.Setup(m => m.CancelBooking(id))
+                            .Returns(updatedBooking);
+
+            var result = _bookingService.CancelBooking(id);
+            
+            _mockBookingRepo.Verify(m => m.GetBookingbyID(id), Times.Once);
+            _mockBookingRepo.Verify(m => m.CancelBooking(id), Times.Once);
+            Assert.NotNull(result);
+            Assert.Equal(id, result.Id);
+            Assert.Equal(status, result.Status);
+        }
+
+        [Fact]
+        public void CancelBooking_InvalidId_ReturnNull()
+        {
+            int id = -1;
+
+            var result = _bookingService.GetBookingbyID(id);
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void CancelBooking_NoBookingFound_ReturnNull()
+        {
+            int id = 1;
+ 
+            _mockBookingRepo.Setup(m => m.GetBookingbyID(id))
+                            .Returns((Booking?)null);
+
+            var result = _bookingService.CancelBooking(id);
+            
+            _mockBookingRepo.Verify(m => m.GetBookingbyID(id), Times.Once);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void CancelBooking_BookingStatusCancelled_ReturnBooking()
+        {
+            int id = 1;
+            int roomId = 1;
+            string bookedBy = "HenrySmith";
+            int userId = 1;
+            DateTimeOffset bookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero);
+            DateTimeOffset bookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero);
+            string  status = "Cancelled";
+
+            var booking = new Booking{Id = id, RoomId = roomId, BookedBy = bookedBy.ToLower(), UserId = userId, BookingFrom = bookingFrom, BookingTo = bookingTo, Status = BookingStatus.Cancelled}; 
+ 
+            _mockBookingRepo.Setup(m => m.GetBookingbyID(id))
+                            .Returns(booking);
+
+            var result = _bookingService.CancelBooking(id);
+            
+            _mockBookingRepo.Verify(m => m.GetBookingbyID(id), Times.Once);
+            _mockBookingRepo.Verify(m => m.CancelBooking(id), Times.Never);
+            Assert.NotNull(result);
+            Assert.Equal(id, result.Id);
+            Assert.Equal(status, result.Status);
+        }
+
+        [Fact]
+        public void CancelBooking_RepoReturnNull_ReturnNull()
+        {
+            int id = 1;
+            int roomId = 1;
+            string bookedBy = "HenrySmith";
+            int userId = 1;
+            DateTimeOffset bookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero);
+            DateTimeOffset bookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero);
+
+            var booking = new Booking{Id = id, RoomId = roomId, BookedBy = bookedBy.ToLower(), UserId = userId, BookingFrom = bookingFrom, BookingTo = bookingTo, Status = BookingStatus.Confirmed}; 
+            var updatedBooking = new Booking{Id = id, RoomId = roomId, BookedBy = bookedBy.ToLower(), UserId = userId, BookingFrom = bookingFrom, BookingTo = bookingTo, Status = BookingStatus.Cancelled}; 
+ 
+            _mockBookingRepo.Setup(m => m.GetBookingbyID(id))
+                            .Returns(booking);
+            _mockBookingRepo.Setup(m => m.CancelBooking(id))
+                            .Returns((Booking?)null);
+
+            var result = _bookingService.CancelBooking(id);
+            
+            _mockBookingRepo.Verify(m => m.GetBookingbyID(id), Times.Once);
+            _mockBookingRepo.Verify(m => m.CancelBooking(id), Times.Once);
+            Assert.Null(result);
+        }
     }
 }
