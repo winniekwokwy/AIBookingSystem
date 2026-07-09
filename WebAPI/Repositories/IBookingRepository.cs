@@ -6,8 +6,6 @@ namespace AIBookingSystem.Repositories
     {
         IEnumerable<Booking>? ListBookings(int userId);
         Booking? BookRoom(Booking booking);
-        Booking? GetBookingbyID(int id);
-
-        Booking? CancelBooking(int id);
+        Booking? GetBookingbyID(int ID);
     }
 }

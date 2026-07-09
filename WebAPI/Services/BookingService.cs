@@ -174,32 +174,5 @@ namespace AIBookingSystem.Services
             }
             return null;
         }
-
-        public BookingDTO? CancelBooking(int id)
-        {
-            if(id >= 0)
-            {
-                var booking = GetBookingbyID(id);
-
-                if (booking != null)
-                {
-                    if (booking.Status == "Confirmed")
-                    {
-                        var updatedBooking = _bookingRepo.CancelBooking(id);
-                        if (updatedBooking == null)
-                        {
-                            return null;
-                        }
-
-                        return MapBooking2DTO(updatedBooking);
-                    }
-                    else
-                    {
-                        return booking;
-                    } 
-                }
-            }
-            return null;
-        }
     }
 }

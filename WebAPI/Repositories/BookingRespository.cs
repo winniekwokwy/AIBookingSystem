@@ -1,5 +1,4 @@
 using AIBookingSystem.Data;
-using AIBookingSystem.Enums;
 using AIBookingSystem.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,19 +37,6 @@ namespace AIBookingSystem.Repositories
             return _dBContext.Bookings
                         .FirstOrDefault(b => b.Id == id);
    
-        }
-
-        public Booking? CancelBooking(int id)
-        {
-            var booking = _dBContext.Bookings
-                        .FirstOrDefault(b => b.Id == id);
-
-            if (booking != null)
-            {
-                booking.Status = BookingStatus.Cancelled;
-                _dBContext.SaveChanges();
-            }
-            return booking;
         }
     }
 }
