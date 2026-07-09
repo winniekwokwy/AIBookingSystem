@@ -347,5 +347,54 @@ namespace WebAPI.Tests.Controllers
             Assert.IsType<NotFoundObjectResult>(notFoundResult);
             Assert.Equal(expected, notFoundResult.Value);     
         }
+
+        [Fact]
+        public void CancelBooking_ValidId_ReturnBookingDTO()
+        {
+            int id = 1;
+            int roomId = 1;
+            string? bookedBy = "HenrySmith";
+            int userId = 1;
+            DateTimeOffset bookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero);
+            DateTimeOffset bookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero);
+            string status = "Cancelled";
+            BookingDTO bookingDTO = new BookingDTO{Id = id, RoomId = roomId, BookedBy = bookedBy, UserId = userId, BookingFrom = bookingFrom, BookingTo = bookingTo, Status = status};
+
+            _mockBookingService.Setup(b => b.CancelBooking(id))
+                                .Returns(bookingDTO);
+            var result = _bookingController.CancelBooking(id);
+
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var returnedBooking = Assert.IsAssignableFrom<BookingDTO>(okResult.Value);
+            Assert.Equal(bookingDTO.Status, returnedBooking.Status);   
+        }
+
+        [Fact]
+        public void CancelBooking_InvalidId_ReturnBadRequest()
+        {
+            int id = -1;
+            string expected = "Please provide a valid booking ID.";
+
+            var result = _bookingController.CancelBooking(id);
+
+            var badRequstResult = result.Result as BadRequestObjectResult;
+            Assert.IsType<BadRequestObjectResult>(badRequstResult);
+            Assert.Equal(expected, badRequstResult.Value);  
+        }
+
+        [Fact]
+        public void CancelBooking_ServiceReturnNull_ReturnNotFound()
+        {
+            int id = 1;
+            string expected = $"Booking with ID, {id}, not found.";
+            
+            _mockBookingService.Setup(b => b.CancelBooking(id))
+                                .Returns((BookingDTO?)null);
+            var result = _bookingController.CancelBooking(id);
+            
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);   
+        }
     }
 }
