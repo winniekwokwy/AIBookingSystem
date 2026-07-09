@@ -96,4 +96,25 @@ public class BookingController : ControllerBase
          _logger.LogError(message);
         return BadRequest(message);
     }
+
+    [HttpPatch]
+    public ActionResult<IEnumerable<BookingDTO>> CancelBooking(int id)
+    {
+        string message = "";
+        if (id > 0)
+        {
+            var booking = _bookingService.CancelBooking(id);
+            if (booking == null)
+            {
+                message = $"Booking with ID, {id}, not found.";
+                _logger.LogError(message);
+                return NotFound(message);
+
+            }
+            return Ok(booking);
+        }
+        message = "Please provide a valid booking ID.";
+        _logger.LogError(message);
+        return BadRequest(message);
+    }
 }
