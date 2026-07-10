@@ -201,5 +201,21 @@ namespace AIBookingSystem.Services
             }
             return null;
         }
+
+        public IEnumerable<BookingDTO>? ListBookings(string username)
+        {
+            if (username != null && username != "")
+            {
+                var bookings = _bookingRepo.ListBookings(username);
+
+                if (bookings != null)
+                {
+                    return (IEnumerable<BookingDTO>?) bookings
+                        .ToList()
+                        .Select(b => MapBooking2DTO(b));
+                }
+            }
+            return null;
+        }
     }
 }
