@@ -1,5 +1,6 @@
 using AIBookingSystem.DTO;
 using AIBookingSystem.Enums;
+using AIBookingSystem.Helpers;
 using AIBookingSystem.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
@@ -150,14 +151,21 @@ namespace AIBookingSystem.Services
             if (user != null){
                 if (user.UserName != null)
                 {
-                    if (!_userRepo.UsernameInUse(user.UserName))
+                    var username = user.UserName.ToLower();
+                    if (!_userRepo.UsernameInUse(username))
                     {
+                        byte[] passwordHash =[];
+                        byte[] passwordSalt = [];
+
+                        PasswordHandler.CreatePasswordHash(user.Password, out passwordHash, out passwordSalt);
+
                         var newUser = new User
                                         {
                                             Name = user.Name,
-                                            UserName = user.UserName.ToLower(),
+                                            UserName = username,
                                             Role = RoleMappingString2Enum(user.Role),
-                                            Password = user.Password,
+                                            PasswordHash = passwordHash,
+                                            PasswordSalt = passwordSalt,
                                             Status = StatusMappingString2Enum(user.Status)
                                         };
                 
