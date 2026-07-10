@@ -4,6 +4,7 @@ using AIBookingSystem.Data;
 using AIBookingSystem.Models;
 using NodaTime;
 using AIBookingSystem.Services;
+using AIBookingSystem.Helpers;
 
 public class DataSeeder
 {
@@ -16,17 +17,25 @@ public class DataSeeder
 
     public void SeedUsers(int noOfUsers, UserRoles typeOfUser)
     {
-            var userFaker = new Faker<User>()
-                .RuleFor(u => u.Name, f => f.Name.FirstName())
-                .RuleFor(u => u.UserName, f => f.Internet.UserName().ToLower())
-                .RuleFor(u => u.Password, f => "@bcd3fgh")
-                .RuleFor(u => u.Role, f => typeOfUser)
-                .RuleFor(u => u.Status, f => UserStatus.Active);
+        var userFaker = new Faker<User>()
+            .RuleFor(u => u.Name, f => f.Name.FirstName())
+            .RuleFor(u => u.UserName, f => f.Internet.UserName().ToLower())
+            .RuleFor(u => u.Role, f => typeOfUser)
+            .RuleFor(u => u.Status, f => UserStatus.Active);
 
-           var users = userFaker.Generate(noOfUsers);
+        byte[] passwordHash = [];
+        byte[] passwordSalt = [];
+        PasswordHandler.CreatePasswordHash("@bcd3fgh", out passwordHash, out passwordSalt);
+        var users = userFaker.Generate(noOfUsers);
 
-            _context.AddRange(users);
-            _context.SaveChanges();
+        foreach (var user in users)
+        {
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+        }
+
+        _context.AddRange(users);
+        _context.SaveChanges();
     }
 
     public void SeedUsers(int noOfUsers, int noOfAdmins)
