@@ -161,5 +161,40 @@ namespace WebAPI.Tests.Repositories
             Assert.Null(result);
         }
 
+        [Fact]
+        public void ListBookings_ValidUsername_ReturnListOfBooking()
+        {
+            string bookedBy = "henrysmith";
+            var context = GetInMemoryDbContext(true);
+            var repository = new BookingRepository(context);
+            var result = repository.ListBookings(bookedBy);
+
+            Assert.NotNull(result);
+            var bookings = Assert.IsType<List<Booking>>(result);
+            Assert.NotNull(bookings);
+            Assert.Equal(2, bookings.Count());
+            if (bookings.Count()>0)
+            {
+                Assert.Equal(1, bookings.First().Id);
+                Assert.Equal(1, bookings.First().RoomId);
+                Assert.Equal(bookedBy, bookings.First().BookedBy);
+                Assert.Equal(1, bookings.First().UserId);
+                Assert.Equal(BookingStatus.Cancelled, bookings.First().Status);
+            }      
+        }
+
+        [Fact]
+        public void ListBookings_NullUsername_ReturnEmpty()
+        {
+            string? bookedBy = null!;
+            var context = GetInMemoryDbContext(true);
+            var repository = new BookingRepository(context);
+            var result = repository.ListBookings(bookedBy);
+
+            Assert.NotNull(result);
+            var bookings = Assert.IsType<List<Booking>>(result);
+            Assert.NotNull(bookings);
+            Assert.Empty(bookings);
+        }
     }
 }

@@ -18,7 +18,7 @@ public class BookingController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet]
+    [HttpGet("{userId:int}")]
     public ActionResult<IEnumerable<BookingDTO>> ListBookings(int userId)
     {
         if (userId <= 0)
@@ -116,5 +116,23 @@ public class BookingController : ControllerBase
         message = "Please provide a valid booking ID.";
         _logger.LogError(message);
         return BadRequest(message);
+    }
+
+    [HttpGet("{username}")]
+    public ActionResult<IEnumerable<BookingDTO>> ListBookings(string username)
+    {
+        if (username == null || username == "")
+        {
+            return BadRequest("Username is invalid.");
+        }
+        var bookings = _bookingService.ListBookings(username);
+        if (bookings == null || bookings.Count() == 0)
+        {
+            string message = "No booking is found. Please check if the username is valid.";
+            _logger.LogError(message);
+            return NotFound(message);
+        }
+
+        return Ok(bookings);
     }
 }

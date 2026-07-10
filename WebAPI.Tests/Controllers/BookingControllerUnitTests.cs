@@ -396,5 +396,70 @@ namespace WebAPI.Tests.Controllers
             Assert.IsType<NotFoundObjectResult>(notFoundResult);
             Assert.Equal(expected, notFoundResult.Value);   
         }
+
+        [Fact]
+        public void ListBookings_ValidUsername_ReturnListOfBookingDTO()
+        {
+            string bookedBy = "aprilfool";
+
+            var booking1 = new BookingDTO{Id = 1, RoomId = 1, BookedBy = bookedBy, UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero), Status = "Cancelled"};
+            var bookings = new List<BookingDTO> (){booking1};
+     
+            _mockBookingService.Setup(b => b.ListBookings(bookedBy))
+                                .Returns(bookings);
+            var result = _bookingController.ListBookings(bookedBy);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var returnedBookings = Assert.IsAssignableFrom<IEnumerable<BookingDTO>>(okResult.Value);
+            Assert.Single(returnedBookings);
+            if (returnedBookings.Count()>0)
+            {
+                Assert.Equal(booking1.RoomId, returnedBookings.First().RoomId);
+                Assert.Equal(booking1.BookedBy, returnedBookings.First().BookedBy);
+                Assert.Equal(booking1.UserId, returnedBookings.First().UserId);
+                Assert.Equal(booking1.BookingFrom, returnedBookings.First().BookingFrom);
+                Assert.Equal(booking1.BookingTo, returnedBookings.First().BookingTo);
+                Assert.Equal(booking1.Status, returnedBookings.First().Status);
+            } 
+        }
+
+        [Fact]
+        public void ListBookings_NullUsername_ReturnBadRequest()
+        {
+            string? bookedBy = null!;
+            string expected = "Username is invalid.";
+
+            var result = _bookingController.ListBookings(bookedBy);
+            
+            var badRequstResult = result.Result as BadRequestObjectResult;
+            Assert.IsType<BadRequestObjectResult>(badRequstResult);
+            Assert.Equal(expected, badRequstResult.Value); 
+        }
+
+        [Fact]
+        public void ListBookings_EmptyUsername_ReturnBadRequest()
+        {
+            string? bookedBy = null!;
+            string expected = "Username is invalid.";
+
+            var result = _bookingController.ListBookings(bookedBy);
+            
+            var badRequstResult = result.Result as BadRequestObjectResult;
+            Assert.IsType<BadRequestObjectResult>(badRequstResult);
+            Assert.Equal(expected, badRequstResult.Value); 
+        }
+
+        [Fact]
+        public void ListBookings_ServiceReturnNull_ReturnListOfBookingDTO()
+        {
+            string bookedBy = "aprilfool";
+            string expected = "No booking is found. Please check if the username is valid.";
+     
+            _mockBookingService.Setup(b => b.ListBookings(bookedBy))
+                                .Returns((List<BookingDTO>?)null);
+            var result = _bookingController.ListBookings(bookedBy);
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.IsType<NotFoundObjectResult>(notFoundResult);
+            Assert.Equal(expected, notFoundResult.Value);
+        }
     }
 }
