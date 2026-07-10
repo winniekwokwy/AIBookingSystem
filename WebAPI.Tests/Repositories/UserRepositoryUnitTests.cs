@@ -1,7 +1,6 @@
 using AIBookingSystem.Data;
 using AIBookingSystem.Enums;
 using AIBookingSystem.Repositories;
-using AIBookingSystem.Helpers;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -17,15 +16,12 @@ namespace WebAPI.Tests.Repositories
                 .Options;
 
             var context = new RoomBookingDbContext(options);
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            string password = "App13M@ng0";
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
+
             if (requiredData)
             {
                 context.Users.AddRange(
-                    new User(){ Id = 1, Name = "Apple Mango", UserName = "applemango", PasswordHash = passwordHash, PasswordSalt = passwordSalt, Role = UserRoles.Admin, Status = UserStatus.Active},
-                    new User() { Id = 2, Name = "Ben Smith", UserName = "bensmith", PasswordHash = passwordHash, PasswordSalt = passwordSalt, Role = UserRoles.User, Status = UserStatus.Active}
+                    new User(){ Id = 1, Name = "Apple Mango", UserName = "applemango", Password = "App13M@ng0", Role = UserRoles.Admin, Status = UserStatus.Active},
+                    new User() { Id = 2, Name = "Ben Smith", UserName = "bensmith", Password = "B3nSmith!", Role = UserRoles.User, Status = UserStatus.Active}
                 );
 
                 context.SaveChanges();
@@ -34,23 +30,10 @@ namespace WebAPI.Tests.Repositories
         }
 
         [Fact]
-        public void IsUserValid_ValidUserIdnCreatedBySmallLetter_ReturnTrue()
+        public void IsUserValid_ValidUserIdnCreatedBy_ReturnTrue()
         {
             int id = 1;
             string createdBy = "applemango";
-            var context = GetInMemoryDbContext(true);
-            var repository = new UserRepository(context);
-
-            var userValid = repository.IsUserValid(id, createdBy);
-
-            Assert.True(userValid);
-        }
-
-        [Fact]
-        public void IsUserValid_ValidUserIdnCreatedByCapitalLetter_ReturnTrue()
-        {
-            int id = 1;
-            string createdBy = "APPLEMANGO";
             var context = GetInMemoryDbContext(true);
             var repository = new UserRepository(context);
 
@@ -168,7 +151,7 @@ namespace WebAPI.Tests.Repositories
         [Fact]
         public void GetUserByUsername_ValidUsername_ReturnUser()
         {
-            string username = "applemango";
+            string username = "AppleMango";
             var context = GetInMemoryDbContext(true);
             var repository = new UserRepository(context);
 
@@ -176,7 +159,7 @@ namespace WebAPI.Tests.Repositories
 
             Assert.NotNull(user);
             Assert.Equal("Apple Mango", user.Name);
-            Assert.Equal(username, user.UserName);
+            Assert.Equal(username.ToLower(), user.UserName);
             Assert.Equal(1, user.Id);
             Assert.Equal(UserRoles.Admin, user.Role);
             Assert.Equal(UserStatus.Active, user.Status);
@@ -208,7 +191,7 @@ namespace WebAPI.Tests.Repositories
         [Fact]
         public void GetUserByID_NonExistingUsername_ReturnNull()
         {
-            string username = "aprilfool";
+            string username = "AprilFool";
             var context = GetInMemoryDbContext(true);
             var repository = new UserRepository(context);
 
@@ -221,21 +204,16 @@ namespace WebAPI.Tests.Repositories
         public void CreateUser_ValidUser_ReturnUser()
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             UserRoles role = UserRoles.User;
             UserStatus status = UserStatus.Active;
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             var user = new User
             {
                 Name = name,
-                UserName = username,
-                PasswordHash = passwordHash,
-                PasswordSalt = passwordSalt,
+                UserName = username.ToLower(),
+                Password = password,
                 Role = role,
                 Status = status
             };
@@ -248,7 +226,7 @@ namespace WebAPI.Tests.Repositories
 
             Assert.NotNull(addedUser);
             Assert.Equal(user.Name, addedUser.Name);
-            Assert.Equal(user.UserName, addedUser.UserName);
+            Assert.Equal(user.UserName.ToLower(), addedUser.UserName);
             Assert.Equal(user.Role, addedUser.Role);
             Assert.Equal(user.Status, addedUser.Status);    
         }
@@ -269,21 +247,16 @@ namespace WebAPI.Tests.Repositories
         public void CreateUser_ExistingUser_ReturnNull()
         {
             string name = "Apple Mango";
-            string username = "applemango";
+            string username = "AppleMango";
             string password = "Appl3M@ng0";
             UserRoles role = UserRoles.User;
             UserStatus status = UserStatus.Active;
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             var user = new User
             {
                 Name = name,
                 UserName = username,
-                PasswordHash = passwordHash,
-                PasswordSalt = passwordSalt,
+                Password = password,
                 Role = role,
                 Status = status
             };
@@ -297,9 +270,9 @@ namespace WebAPI.Tests.Repositories
         }
 
         [Fact]
-        public void UsernameInUse_ValidUsernameSmallLetter_ReturnTrue()
+        public void UsernameInUse_ValidUsername_ReturnTrue()
         {
-            string username = "applemango";
+            string username = "AppleMango";
             var context = GetInMemoryDbContext(true);
             var repository = new UserRepository(context);
 
@@ -307,18 +280,6 @@ namespace WebAPI.Tests.Repositories
 
             Assert.True(result);
         }       
-
-        [Fact]
-        public void UsernameInUse_ValidUsernameCapitalLetter_ReturnTrue()
-        {
-            string username = "APPLEMANGO";
-            var context = GetInMemoryDbContext(true);
-            var repository = new UserRepository(context);
-
-            var result = repository.UsernameInUse(username);
-
-            Assert.True(result);
-        }  
 
         [Fact]
         public void UsernameInUse_NullUsername_ReturnFalse()
@@ -335,7 +296,7 @@ namespace WebAPI.Tests.Repositories
         [Fact]
         public void UsernameInUse_NonExistingUsername_ReturnFalse()
         {
-            string username = "aprilpool";
+            string username = "AprilPool";
             var context = GetInMemoryDbContext(true);
             var repository = new UserRepository(context);
 

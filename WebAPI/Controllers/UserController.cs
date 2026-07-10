@@ -33,7 +33,7 @@ namespace AIBookingSystem.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<UserDTO>> GetUserbyID(int id)
+        public ActionResult<IEnumerable<UserDTO>> GetUserByID(int id)
         {
             string message;
             if (id > 0) 
@@ -55,12 +55,12 @@ namespace AIBookingSystem.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<UserDTO>> GetUserbyUsername(string userName)
+        public ActionResult<IEnumerable<UserDTO>> GetUserByUsername(string userName)
         {
             string message;
             if (userName != null)
             {
-                var user = _userService.GetUserbyUsername(userName.ToLower());
+                var user = _userService.GetUserbyUsername(userName);
                 if (user == null)
                 {
                     
@@ -113,7 +113,7 @@ namespace AIBookingSystem.Controllers
                                 }
                                 else {
 
-                                    return CreatedAtAction(nameof(GetUserbyID), new { id = newUser.Id }, newUser);   
+                                    return CreatedAtAction(nameof(GetUserByID), new { id = newUser.Id }, newUser);   
                                     
                                 }
                             }
