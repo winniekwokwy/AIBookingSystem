@@ -642,5 +642,66 @@ namespace WebAPI.Tests.Services
             _mockBookingRepo.Verify(m => m.CancelBooking(id), Times.Once);
             Assert.Null(result);
         }
+
+        [Fact]
+        public void ListBookings_ValidUsername_ReturnListOfBookingDTO()
+        {
+            string username = "henrysmith";
+
+            var booking1 = new Booking{Id = 1, RoomId = 1, BookedBy = username, UserId = 1, BookingFrom = new DateTimeOffset(2026, 12, 20, 14, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 12, 20, 15, 0, 0, TimeSpan.Zero), Status = BookingStatus.Cancelled};
+            var booking2 = new Booking{Id = 2, RoomId = 2, BookedBy = username, UserId = 1, BookingFrom = new DateTimeOffset(2026, 07, 28, 10, 0, 0, TimeSpan.Zero), BookingTo = new DateTimeOffset(2026, 07, 28, 11, 0, 0, TimeSpan.Zero), Status = BookingStatus.Confirmed};
+            var bookings = new List<Booking> (){booking1, booking2};
+
+            _mockBookingRepo.Setup(r => r.ListBookings(username))
+                            .Returns(bookings);
+            
+            var result = _bookingService.ListBookings(username);
+
+            Assert.NotNull(result);
+            Assert.Equal(bookings.Count(), result.Count());
+            if(result.Count()>0)
+            {
+                Assert.Equal(booking1.Id, result.First().Id);
+                Assert.Equal(booking1.RoomId, result.First().RoomId);
+                Assert.Equal(booking1.BookedBy, result.First().BookedBy);
+                Assert.Equal(booking1.UserId, result.First().UserId);
+                Assert.Equal(booking1.BookingFrom, result.First().BookingFrom);
+                Assert.Equal(booking1.BookingTo, result.First().BookingTo);
+                Assert.Equal("Cancelled", result.First().Status);
+            }
+        }
+
+        [Fact]
+        public void ListBookings_NullUsername_ReturnNull()
+        {
+            string? username = null!;
+
+            var result = _bookingService.ListBookings(username);
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void ListBookings_EmptyUsername_ReturnNull()
+        {
+            string username = "";
+            
+            var result = _bookingService.ListBookings(username);
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void ListBookings_RepoReturnNull_ReturnNull()
+        {
+            string username = "henrysmith";
+
+            _mockBookingRepo.Setup(r => r.ListBookings(username))
+                            .Returns((List<Booking>?)null);
+            
+            var result = _bookingService.ListBookings(username);
+
+            Assert.Null(result);
+        }
     }
 }

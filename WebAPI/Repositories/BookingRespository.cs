@@ -52,5 +52,12 @@ namespace AIBookingSystem.Repositories
             }
             return booking;
         }
+
+        public IEnumerable<Booking>? ListBookings(string username)
+        {
+            return _dBContext.Bookings
+                .Where(b => b.BookedBy == username)
+                .ToList();
+        }
     }
 }

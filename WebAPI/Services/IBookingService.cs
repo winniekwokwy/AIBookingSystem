@@ -17,6 +17,6 @@ namespace AIBookingSystem.Services
         BookingDTO? BookRoom(BookingCreateDTO bookingCreateDTO);
 
         BookingDTO? CancelBooking(int id);
-
+        IEnumerable<BookingDTO>? ListBookings(string username);
     }
 }
