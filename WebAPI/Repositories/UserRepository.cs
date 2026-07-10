@@ -73,13 +73,12 @@ namespace AIBookingSystem.Repositories
         {    
             if (user != null) 
             {
-                var username = user.UserName.ToLower();
-                if (!UsernameInUse(username))
+                if (!UsernameInUse(user.UserName))
                 {
                     _dBContext.Users.Add(user);
                     _dBContext.SaveChanges();
 
-                    return _dBContext.Users.FirstOrDefault(u => u.UserName == username);
+                    return _dBContext.Users.FirstOrDefault(u => u.UserName == user.UserName.ToLower());
                 }
             }
             return null;

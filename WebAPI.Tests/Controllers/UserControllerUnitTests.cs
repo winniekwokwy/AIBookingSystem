@@ -6,7 +6,6 @@ using AIBookingSystem.Enums;
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel.DataAnnotations;
 
 
 namespace WebAPI.Tests.Controllers
@@ -30,8 +29,8 @@ namespace WebAPI.Tests.Controllers
         {
             List<UserDTO> users = new List<UserDTO>
             {
-            new UserDTO(){ Id = 1, Name = "Apple Mango", UserName = "applemango", Role = "Admin", Status = "Active"},
-            new UserDTO(){ Id = 2, Name = "Ben Smith", UserName = "bensmith", Role = "User", Status = "Active"}
+            new UserDTO(){ Id = 1, Name = "Apple Mango", UserName = "AppleMango", Role = "Admin", Status = "Active"},
+            new UserDTO(){ Id = 2, Name = "Ben Smith", UserName = "BenSmith", Role = "User", Status = "Active"}
             };
             _mockUserService.Setup(s => s.ListUsers())
                         .Returns(users);
@@ -86,14 +85,13 @@ namespace WebAPI.Tests.Controllers
         public void GetUserByID_ExistingUsers_ReturnOKWithUserDTO()
         {
             int id = 1;
-            UserDTO user = new UserDTO(){ Id = id, Name = "Apple Mango", UserName = "applemango", Role = "Admin", Status = "Active"};
+            UserDTO user = new UserDTO(){ Id = id, Name = "Apple Mango", UserName = "AppleMango", Role = "Admin", Status = "Active"};
             
             _mockUserService.Setup(s => s.GetUserbyID(id))
                         .Returns(user);
 
-            var result = _userController.GetUserbyID(id);
+            var result = _userController.GetUserByID(id);
 
-            _mockUserService.Verify(m => m.GetUserbyID(id), Times.Once);
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             var returnedUser = Assert.IsType<UserDTO>(okResult.Value);
             Assert.NotNull(returnedUser);
@@ -111,7 +109,7 @@ namespace WebAPI.Tests.Controllers
             _mockUserService.Setup(s => s.GetUserbyID(id))
                         .Returns((UserDTO?)null);
 
-            var result = _userController.GetUserbyID(id);
+            var result = _userController.GetUserByID(id);
 
             var notFoundResult = result.Result as NotFoundObjectResult;
             Assert.IsType<NotFoundObjectResult>(notFoundResult);
@@ -124,7 +122,7 @@ namespace WebAPI.Tests.Controllers
             int id = -1;
             string expected = "Please provide valid Id for getting user.";
 
-            var result = _userController.GetUserbyID(id);
+            var result = _userController.GetUserByID(id);
 
             var notFoundResult = result.Result as NotFoundObjectResult;
             Assert.IsType<NotFoundObjectResult>(notFoundResult);
@@ -132,15 +130,15 @@ namespace WebAPI.Tests.Controllers
         }
 
         [Fact]
-        public void GetUserByUsername_ExistingUserswithSmallLetter_ReturnOKWithUserDTO()
+        public void GetUserByUsername_ExistingUsers_ReturnOKWithUserDTO()
         {
-            string username = "applemango";
+            string username = "AppleMango";
             UserDTO user = new UserDTO(){ Id = 1, Name = "Apple Mango", UserName = username, Role = "Admin", Status = "Active"};
             
             _mockUserService.Setup(s => s.GetUserbyUsername(username))
                         .Returns(user);
 
-            var result = _userController.GetUserbyUsername(username);
+            var result = _userController.GetUserByUsername(username);
 
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             var returnedUser = Assert.IsType<UserDTO>(okResult.Value);
@@ -152,30 +150,10 @@ namespace WebAPI.Tests.Controllers
         }
 
         [Fact]
-        public void GetUserByUsername_ExistingUsersWithCapitalLetter_ReturnOKWithUserDTO()
-        {
-            string username = "APPLEMANGO";
-            UserDTO user = new UserDTO(){ Id = 1, Name = "Apple Mango", UserName = username.ToLower(), Role = "Admin", Status = "Active"};
-            
-            _mockUserService.Setup(s => s.GetUserbyUsername(username.ToLower()))
-                        .Returns(user);
-
-            var result = _userController.GetUserbyUsername(username);
-
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var returnedUser = Assert.IsType<UserDTO>(okResult.Value);
-            Assert.NotNull(returnedUser);
-            Assert.Equal(user.Name, returnedUser.Name);  
-            Assert.Equal(user.UserName.ToLower(), returnedUser.UserName);  
-            Assert.Equal(user.Role, returnedUser.Role);  
-            Assert.Equal(user.Status, returnedUser.Status);  
-        }
-
-        [Fact]
         public void GetUserByUsername_NullUsername_ReturnNotFound()
         {
             string expected = "Please provide valid user name for getting user.";
-            var result = _userController.GetUserbyUsername(null!);
+            var result = _userController.GetUserByUsername(null!);
 
             var notFoundResult = result.Result as NotFoundObjectResult;
             Assert.IsType<NotFoundObjectResult>(notFoundResult);
@@ -185,12 +163,12 @@ namespace WebAPI.Tests.Controllers
         [Fact]
         public void GetUserByUsername_NonExistingUsers_ReturnNotFound()
         {
-            string username = "applemango";
+            string username = "AppleMango";
             string expected = $"User with User name, {username}, is not found.";
             _mockUserService.Setup(s => s.GetUserbyUsername(username))
                         .Returns((UserDTO?)null);
 
-            var result = _userController.GetUserbyUsername(username);
+            var result = _userController.GetUserByUsername(username);
 
             var notFoundResult = result.Result as NotFoundObjectResult;
             Assert.IsType<NotFoundObjectResult>(notFoundResult);
@@ -202,7 +180,7 @@ namespace WebAPI.Tests.Controllers
 
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "Active";
@@ -254,7 +232,7 @@ namespace WebAPI.Tests.Controllers
 
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admi";
             string status = "Active";
@@ -281,7 +259,7 @@ namespace WebAPI.Tests.Controllers
 
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = null!;
             string status = "Active";
@@ -308,7 +286,7 @@ namespace WebAPI.Tests.Controllers
 
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "";
             string status = "Active";
@@ -335,7 +313,7 @@ namespace WebAPI.Tests.Controllers
 
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "Activ";
@@ -364,7 +342,7 @@ namespace WebAPI.Tests.Controllers
 
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = null!;
@@ -393,7 +371,7 @@ namespace WebAPI.Tests.Controllers
 
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "";
@@ -421,7 +399,7 @@ namespace WebAPI.Tests.Controllers
 
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "Active";

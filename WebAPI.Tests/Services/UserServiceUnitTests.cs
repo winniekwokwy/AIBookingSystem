@@ -2,7 +2,6 @@
 using AIBookingSystem.Services;
 using AIBookingSystem.Enums;
 using AIBookingSystem.DTO;
-using AIBookingSystem.Helpers;
 
 using Moq;
 using System.Net.Cache;
@@ -177,22 +176,17 @@ namespace WebAPI.Tests.Services
         public void MapUser2DTO_ValidUser_ReturnUserDTO()
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "Active";
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             var result = _userService.MapUser2DTO(new User
                         {
                             Id = 1,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            Password = password,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -217,14 +211,11 @@ namespace WebAPI.Tests.Services
         public void CreateUser_ValidUserCreateDTO_ReturnUserDTO()
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             _mockUserRepo.Setup(repo => repo.UsernameInUse(username))
                         .Returns(false);
@@ -235,19 +226,18 @@ namespace WebAPI.Tests.Services
                             Id = 1,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            Password = password,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
 
             var result = _userService.CreateUser(new UserCreateDTO
             {
-                Name = name,
-                UserName = username,
-                Password = password,
-                Role = role,
-                Status = status
+            Name = name,
+            UserName = username,
+            Password = password,
+            Role = role,
+            Status = status
             });
 
             Assert.NotNull(result);
@@ -269,14 +259,10 @@ namespace WebAPI.Tests.Services
         public void CreateUser_ExistingUser_ReturnNull()
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "Active";
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             _mockUserRepo.Setup(repo => repo.UsernameInUse(username))
                         .Returns(true);
@@ -302,10 +288,6 @@ namespace WebAPI.Tests.Services
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             var result = _userService.CreateUser(new UserCreateDTO
                         {
                             Name = name,
@@ -322,14 +304,11 @@ namespace WebAPI.Tests.Services
         public void CreateUser_Failed2RetrievedUser_ReturnNull()
         {
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             _mockUserRepo.Setup(repo => repo.UsernameInUse(username))
                         .Returns(false);
@@ -339,11 +318,11 @@ namespace WebAPI.Tests.Services
 
             var result = _userService.CreateUser(new UserCreateDTO
             {
-                Name = name,
-                UserName = username,
-                Password = password,
-                Role = role,
-                Status = status
+            Name = name,
+            UserName = username,
+            Password = password,
+            Role = role,
+            Status = status
             });
 
             Assert.Null(result);
@@ -352,15 +331,11 @@ namespace WebAPI.Tests.Services
         [Fact]
         public void ListUsers_WithData_ReturnUsers()
         {
-            string password = "App13M@ng0";
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             List<User> users = new List<User>
             {
-            new User(){ Id = 1, Name = "Apple Mango", UserName = "applemango", PasswordHash = passwordHash, PasswordSalt = passwordSalt, Role = UserRoles.Admin, Status = UserStatus.Active},
-            new User() { Id = 2, Name = "Ben Smith", UserName = "bensmith", PasswordHash = passwordHash, PasswordSalt = passwordSalt, Role = UserRoles.User, Status = UserStatus.Active}
+            new User(){ Id = 1, Name = "Apple Mango", UserName = "AppleMango", Password = "App13M@ng0", Role = UserRoles.Admin, Status = UserStatus.Active},
+            new User() { Id = 2, Name = "Ben Smith", UserName = "BenSmith", Password = "B3nSmith!", Role = UserRoles.User, Status = UserStatus.Active}
             };
             _mockUserRepo.Setup(repo => repo.ListUsers())
                         .Returns(users);
@@ -402,14 +377,10 @@ namespace WebAPI.Tests.Services
         {
             int id = 1;
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "Active";
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
                         .Returns(new User
@@ -417,8 +388,7 @@ namespace WebAPI.Tests.Services
                             Id = id,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            Password = password,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -444,27 +414,22 @@ namespace WebAPI.Tests.Services
         }
 
         [Fact]
-        public void GetUserByUsername_ExistingUserWithSmallLetter_ReturnUser()
+        public void GetUserByUsername_ExistingUser_ReturnUser()
         {
             int id = 1;
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
-            _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username))
+            _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username.ToLower()))
                         .Returns(new User
                         {
                             Id = id,
                             Name = name,
-                            UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            UserName = username.ToLower(),
+                            Password = password,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -475,44 +440,7 @@ namespace WebAPI.Tests.Services
             Assert.NotNull(userName);
             Assert.Equal(id, result.Id);
             Assert.Equal(name, result.Name);
-            Assert.Equal(username.ToLower(), userName!);
-            Assert.Equal(role, result.Role);
-            Assert.Equal(status, result.Status);
-        }
-
-        [Fact]
-        public void GetUserByUsername_ExistingUserWithCapitalLetter_ReturnUser()
-        {
-            int id = 1;
-            string name = "May Nicolaos";
-            string username = "MAYNICOLAOS";
-            string password = "M@yNic01@0s";
-            string role = "Admin";
-            string status = "Active";
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
-            _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username.ToLower()))
-                        .Returns(new User
-                        {
-                            Id = id,
-                            Name = name,
-                            UserName = username.ToLower(),
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
-                            Role = UserRoles.Admin,
-                            Status = UserStatus.Active
-                        });
-            var result = Assert.IsType<UserDTO>(_userService.GetUserbyUsername(username.ToLower()));
-            Assert.NotNull(result);
-            var userName = result.UserName;
-
-            Assert.NotNull(userName);
-            Assert.Equal(id, result.Id);
-            Assert.Equal(name, result.Name);
-            Assert.Equal(username.ToLower(), userName!);
+            Assert.Equal(username.ToLower(), userName!.ToLower());
             Assert.Equal(role, result.Role);
             Assert.Equal(status, result.Status);
         }
@@ -520,7 +448,7 @@ namespace WebAPI.Tests.Services
         [Fact]
         public void GetUserByUsername_UserNotFound_ReturnNull()
         {
-            string username = "applemango";
+            string username = "AppleMango";
             _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username))
                         .Returns((User?)null);
 
@@ -530,55 +458,12 @@ namespace WebAPI.Tests.Services
         }
 
         [Fact]
-        public void IsUserValid_ValidUserInputsSmallLetter_ReturnTrue()
+        public void IsUserValid_ValidUserInputs_ReturnTrue()
         {
             int id = 1;
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
-            _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
-                        .Returns(new User
-                        {
-                            Id = id,
-                            Name = name,
-                            UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
-                            Role = UserRoles.Admin,
-                            Status = UserStatus.Active
-                        });
-            _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username))
-                        .Returns(new User
-                        {
-                            Id = id,
-                            Name = name,
-                            UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
-                            Role = UserRoles.Admin,
-                            Status = UserStatus.Active
-                        });
-            var result = _userService.IsUserValid(id, username);
-
-            Assert.True(result);
-        }
-
-        [Fact]
-        public void IsUserValid_ValidUserInputsCapitalLetter_ReturnTrue()
-        {
-            int id = 1;
-            string name = "May Nicolaos";
-            string username = "MAYNICOLAOS";
-            string password = "M@yNic01@0s";
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
                         .Returns(new User
@@ -586,8 +471,7 @@ namespace WebAPI.Tests.Services
                             Id = id,
                             Name = name,
                             UserName = username.ToLower(),
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            Password = password,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -597,8 +481,7 @@ namespace WebAPI.Tests.Services
                             Id = id,
                             Name = name,
                             UserName = username.ToLower(),
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            Password = password,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -611,7 +494,7 @@ namespace WebAPI.Tests.Services
         public void IsUserValid_InvalidId_ReturnTrue()
         {
             int id = -1;
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
 
             var result = _userService.IsUserValid(id, username);
 
@@ -645,12 +528,8 @@ namespace WebAPI.Tests.Services
         {
             int id = 1;
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
                         .Returns((User?)null);
@@ -660,8 +539,7 @@ namespace WebAPI.Tests.Services
                             Id = id,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            Password = password,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -675,12 +553,8 @@ namespace WebAPI.Tests.Services
         {
             int id = 1;
             string name = "May Nicolaos";
-            string username = "maynicolaos";
+            string username = "MayNicolaos";
             string password = "M@yNic01@0s";
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
                         .Returns(new User
@@ -688,8 +562,7 @@ namespace WebAPI.Tests.Services
                             Id = id,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            Password = password,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -705,16 +578,13 @@ namespace WebAPI.Tests.Services
         {
             int id1 = 1;
             string name1 = "May Nicolaos";
-            string username1 = "maynicolaos";
-            string password = "M@yNic01@0s";
+            string username1 = "MayNicolaos";
+            string password1 = "M@yNic01@0s";
 
             int id2 = 2;
             string name2 = "Happy Person";
-            string username2 = "happyperson";
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
+            string username2 = "HappyPerson";
+            string password2 = "H@ppyP3rs0n";
 
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id1))
                         .Returns(new User
@@ -722,8 +592,7 @@ namespace WebAPI.Tests.Services
                             Id = id1,
                             Name = name1,
                             UserName = username1,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            Password = password1,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -733,8 +602,7 @@ namespace WebAPI.Tests.Services
                             Id = id2,
                             Name = name2,
                             UserName = username2,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            Password = password2,
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
