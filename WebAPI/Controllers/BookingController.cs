@@ -18,7 +18,7 @@ public class BookingController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet]
+    [HttpGet("{userId:int}")]
     public ActionResult<IEnumerable<BookingDTO>> ListBookings(int userId)
     {
         if (userId <= 0)
@@ -118,7 +118,7 @@ public class BookingController : ControllerBase
         return BadRequest(message);
     }
 
-        [HttpGet]
+    [HttpGet("{username}")]
     public ActionResult<IEnumerable<BookingDTO>> ListBookings(string username)
     {
         if (username == null || username == "")
