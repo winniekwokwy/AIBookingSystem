@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AIBookingSystem.Controllers
 {
 
     [ApiController]
     [Route("api/[controller]/[action]")]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -19,6 +21,7 @@ namespace AIBookingSystem.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public ActionResult<IEnumerable<UserDTO>> ListUsers()
         {
             var users = _userService.ListUsers();
@@ -77,6 +80,7 @@ namespace AIBookingSystem.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public ActionResult<UserDTO> CreateUser([FromBody] UserCreateDTO createDto)
         {
             string message="";

@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Services;
 using AIBookingSystem.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AIBookingSystem.Controllers;
 
 [ApiController]
 [Route("api/[controller]/[action]")]
+[Authorize]
 public class BookingController : ControllerBase
 {
     private readonly IBookingService _bookingService;

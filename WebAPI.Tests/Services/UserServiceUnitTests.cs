@@ -2,10 +2,13 @@
 using AIBookingSystem.Services;
 using AIBookingSystem.Enums;
 using AIBookingSystem.DTO;
-using AIBookingSystem.Helpers;
+using AIBookingSystem.Models;
 
 using Moq;
+using Bogus;
 using System.Net.Cache;
+using System.ComponentModel;
+using Microsoft.Extensions.Configuration;
 
 namespace WebAPI.Tests.Services
 
@@ -14,11 +17,22 @@ namespace WebAPI.Tests.Services
     {
         private readonly UserService _userService;
         private readonly Mock<IUserRepository> _mockUserRepo;
+        private readonly Mock<IClientCacheService> _mockClientCacheService;
+        private readonly Mock<ITokenService> _mockTokenService;
+        private readonly IConfiguration _configuration;
 
         public UserServiceUnitTests()
         {
             _mockUserRepo = new Mock<IUserRepository>();
-            _userService = new UserService(_mockUserRepo.Object);
+            _mockClientCacheService = new Mock<IClientCacheService>();
+            _mockTokenService = new Mock<ITokenService>();
+            _configuration = new ConfigurationBuilder()
+                                    .AddInMemoryCollection(new Dictionary<string, string?>
+                                    {
+                                        ["JwtSettings:AccessTokenExpirationMinutes"] = "15"
+                                    })
+                                    .Build();
+            _userService = new UserService(_mockUserRepo.Object, _mockTokenService.Object, _mockClientCacheService.Object, _configuration);
         }
         
         [Fact]
@@ -182,17 +196,12 @@ namespace WebAPI.Tests.Services
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             var result = _userService.MapUser2DTO(new User
                         {
                             Id = 1,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -222,10 +231,6 @@ namespace WebAPI.Tests.Services
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             _mockUserRepo.Setup(repo => repo.UsernameInUse(username))
                         .Returns(false);
 
@@ -235,8 +240,7 @@ namespace WebAPI.Tests.Services
                             Id = 1,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -274,10 +278,6 @@ namespace WebAPI.Tests.Services
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             _mockUserRepo.Setup(repo => repo.UsernameInUse(username))
                         .Returns(true);
 
@@ -302,10 +302,6 @@ namespace WebAPI.Tests.Services
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             var result = _userService.CreateUser(new UserCreateDTO
                         {
                             Name = name,
@@ -326,10 +322,6 @@ namespace WebAPI.Tests.Services
             string password = "M@yNic01@0s";
             string role = "Admin";
             string status = "Active";
-
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             _mockUserRepo.Setup(repo => repo.UsernameInUse(username))
                         .Returns(false);
@@ -353,14 +345,11 @@ namespace WebAPI.Tests.Services
         public void ListUsers_WithData_ReturnUsers()
         {
             string password = "App13M@ng0";
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
             List<User> users = new List<User>
             {
-            new User(){ Id = 1, Name = "Apple Mango", UserName = "applemango", PasswordHash = passwordHash, PasswordSalt = passwordSalt, Role = UserRoles.Admin, Status = UserStatus.Active},
-            new User() { Id = 2, Name = "Ben Smith", UserName = "bensmith", PasswordHash = passwordHash, PasswordSalt = passwordSalt, Role = UserRoles.User, Status = UserStatus.Active}
+            new User(){ Id = 1, Name = "Apple Mango", UserName = "applemango", PasswordHash = BCrypt.Net.BCrypt.HashPassword(password), Role = UserRoles.Admin, Status = UserStatus.Active},
+            new User() { Id = 2, Name = "Ben Smith", UserName = "bensmith", PasswordHash = BCrypt.Net.BCrypt.HashPassword(password), Role = UserRoles.User, Status = UserStatus.Active}
             };
             _mockUserRepo.Setup(repo => repo.ListUsers())
                         .Returns(users);
@@ -407,18 +396,13 @@ namespace WebAPI.Tests.Services
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
                         .Returns(new User
                         {
                             Id = id,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -453,18 +437,13 @@ namespace WebAPI.Tests.Services
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username))
                         .Returns(new User
                         {
                             Id = id,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -490,18 +469,13 @@ namespace WebAPI.Tests.Services
             string role = "Admin";
             string status = "Active";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username.ToLower()))
                         .Returns(new User
                         {
                             Id = id,
                             Name = name,
                             UserName = username.ToLower(),
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -537,18 +511,13 @@ namespace WebAPI.Tests.Services
             string username = "maynicolaos";
             string password = "M@yNic01@0s";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
                         .Returns(new User
                         {
                             Id = id,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -558,8 +527,7 @@ namespace WebAPI.Tests.Services
                             Id = id,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -576,18 +544,13 @@ namespace WebAPI.Tests.Services
             string username = "MAYNICOLAOS";
             string password = "M@yNic01@0s";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
                         .Returns(new User
                         {
                             Id = id,
                             Name = name,
                             UserName = username.ToLower(),
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -597,8 +560,7 @@ namespace WebAPI.Tests.Services
                             Id = id,
                             Name = name,
                             UserName = username.ToLower(),
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -648,10 +610,6 @@ namespace WebAPI.Tests.Services
             string username = "maynicolaos";
             string password = "M@yNic01@0s";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
                         .Returns((User?)null);
             _mockUserRepo.Setup(repo => repo.GetUserbyUsername(username))
@@ -660,8 +618,7 @@ namespace WebAPI.Tests.Services
                             Id = id,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -678,18 +635,13 @@ namespace WebAPI.Tests.Services
             string username = "maynicolaos";
             string password = "M@yNic01@0s";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id))
                         .Returns(new User
                         {
                             Id = id,
                             Name = name,
                             UserName = username,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -712,18 +664,13 @@ namespace WebAPI.Tests.Services
             string name2 = "Happy Person";
             string username2 = "happyperson";
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             _mockUserRepo.Setup(repo => repo.GetUserbyID(id1))
                         .Returns(new User
                         {
                             Id = id1,
                             Name = name1,
                             UserName = username1,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
@@ -733,14 +680,622 @@ namespace WebAPI.Tests.Services
                             Id = id2,
                             Name = name2,
                             UserName = username2,
-                            PasswordHash = passwordHash,
-                            PasswordSalt = passwordSalt,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                             Role = UserRoles.Admin,
                             Status = UserStatus.Active
                         });
             var result = _userService.IsUserValid(id1, username2);
 
             Assert.False(result);
+        }
+
+        [Fact]
+        public void AuthenticateUser_ValidParameters_ReturnAuthResponseDTO()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            Client client = new Client()
+                            {
+                                Id = 1,
+                                ClientId = clientId, // Unique client identifier used in JWT tokens
+                                Name = "Demo Client Application One",
+                                ClientSecret = "fPXxcJw8TW5sA+S4rl4tIPcKk+oXAqoRBo+1s2yjUS4=", // Base64-encoded secret key
+                                ClientURL = "https://clientappone.example.com", // Used as Audience in JWT validation
+                                IsActive = true // Active client flag
+                            };
+
+            UserLoginDTO loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            User user = new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        };
+
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            List<string> roles = Enum.GetNames(typeof(UserRoles)).ToList();
+
+            string accessToken = "fake-refresh-token";
+            var refreshToken = new RefreshToken
+                                {
+                                    Token = accessToken,
+                                    Expires = DateTime.UtcNow.AddDays(7),
+                                    IsRevoked = false
+                                };
+
+            var accessTokenExpiryMinutes = int.TryParse(_configuration["JwtSettings:AccessTokenExpirationMinutes"], out var val) ? val : 15;
+
+            string jwtId = "test-jwt-id";
+
+            _mockUserRepo.Setup(r => r.AuthenticateUser(loginDTO))
+                        .Returns(user);
+
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(client.ClientId))
+                                .Returns(client);
+            _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
+                                .Returns(accessToken);
+            _mockTokenService.Setup(s => s.GenerateRefreshToken(ipAddress, jwtId, client, user.Id))
+                                .Returns(refreshToken);
+            _mockTokenService.Setup(s => s.AddRefreshTokens(refreshToken));
+            
+            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            Assert.NotNull(result);
+            Assert.Equal(accessToken, result.AccessToken);
+            Assert.Equal(refreshToken.Token, result.RefreshToken);
+            Assert.True(result.AccessTokenExpiresAt > DateTime.UtcNow);
+            _mockTokenService.Verify(x => x.AddRefreshTokens(refreshToken), Times.Once);
+        }
+
+        [Fact]
+        public void AuthenticateUser_RepoAuthenticateUserFailed_ReturnNull()
+        {
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            UserLoginDTO loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+     
+            _mockUserRepo.Setup(r => r.AuthenticateUser(loginDTO))
+                        .Returns((User?)null);
+
+            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void AuthenticateUser_InvalidLoginDTO_ReturnNull()
+        {
+            UserLoginDTO? loginDTO = null!;
+            
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            Assert.Null(result);
+        }        
+
+        [Fact]
+        public void AuthenticateUser_IpAddressNull_ReturnNull()
+        {
+
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            UserLoginDTO loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            string? ipAddress = null!;
+                      
+            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void AuthenticateUser_IpAddressEmpty_ReturnNull()
+        {
+
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            UserLoginDTO loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            string? ipAddress = "";
+                      
+            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void AuthenticateUser_InvalidIpAddress_ReturnNull()
+        {
+
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            UserLoginDTO loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            string ipAddress = "10.fdsf.122.fsfds";
+                      
+            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void AuthenticateUser_GetClientFailed_ReturnAuthResponseDTO()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            UserLoginDTO loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            User user = new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        };
+
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            _mockUserRepo.Setup(r => r.AuthenticateUser(loginDTO))
+                        .Returns(user);
+
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(clientId))
+                                .Returns((Client?)null);
+           
+            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void AuthenticateUser_GenerateAccessTokenFailed_ReturnNull()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            Client client = new Client()
+                            {
+                                Id = 1,
+                                ClientId = clientId, // Unique client identifier used in JWT tokens
+                                Name = "Demo Client Application One",
+                                ClientSecret = "fPXxcJw8TW5sA+S4rl4tIPcKk+oXAqoRBo+1s2yjUS4=", // Base64-encoded secret key
+                                ClientURL = "https://clientappone.example.com", // Used as Audience in JWT validation
+                                IsActive = true // Active client flag
+                            };
+
+            UserLoginDTO loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            User user = new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        };
+
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            List<string> roles = Enum.GetNames(typeof(UserRoles)).ToList();
+
+            string accessToken = "fake-refresh-token";
+            var refreshToken = new RefreshToken
+                                {
+                                    Token = accessToken,
+                                    Expires = DateTime.UtcNow.AddDays(7),
+                                    IsRevoked = false
+                                };
+
+            var accessTokenExpiryMinutes = int.TryParse(_configuration["JwtSettings:AccessTokenExpirationMinutes"], out var val) ? val : 15;
+
+            string jwtId = "test-jwt-id";
+
+            _mockUserRepo.Setup(r => r.AuthenticateUser(loginDTO))
+                        .Returns(user);
+
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(client.ClientId))
+                                .Returns(client);
+            _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
+                                .Returns((string?)null!);
+            
+            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void AuthenticateUser_GenerateRefreshTokenFailed_ReturnNull()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            Client client = new Client()
+                            {
+                                Id = 1,
+                                ClientId = clientId, // Unique client identifier used in JWT tokens
+                                Name = "Demo Client Application One",
+                                ClientSecret = "fPXxcJw8TW5sA+S4rl4tIPcKk+oXAqoRBo+1s2yjUS4=", // Base64-encoded secret key
+                                ClientURL = "https://clientappone.example.com", // Used as Audience in JWT validation
+                                IsActive = true // Active client flag
+                            };
+
+            UserLoginDTO loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            User user = new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        };
+
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            List<string> roles = Enum.GetNames(typeof(UserRoles)).ToList();
+
+            string accessToken = "fake-refresh-token";
+            var refreshToken = new RefreshToken
+                                {
+                                    Token = accessToken,
+                                    Expires = DateTime.UtcNow.AddDays(7),
+                                    IsRevoked = false
+                                };
+
+            var accessTokenExpiryMinutes = int.TryParse(_configuration["JwtSettings:AccessTokenExpirationMinutes"], out var val) ? val : 15;
+
+            string jwtId = "test-jwt-id";
+
+            _mockUserRepo.Setup(r => r.AuthenticateUser(loginDTO))
+                        .Returns(user);
+
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(client.ClientId))
+                                .Returns(client);
+            _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
+                                .Returns(accessToken);
+            _mockTokenService.Setup(s => s.GenerateRefreshToken(ipAddress, jwtId, client, user.Id))
+                                .Returns((RefreshToken?)null!);
+            
+            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void RefreshToken_ValidParameters_ReturnAuthResponseDTO()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            Client client = new Client()
+                            {
+                                Id = 1,
+                                ClientId = clientId, // Unique client identifier used in JWT tokens
+                                Name = "Demo Client Application One",
+                                ClientSecret = "fPXxcJw8TW5sA+S4rl4tIPcKk+oXAqoRBo+1s2yjUS4=", // Base64-encoded secret key
+                                ClientURL = "https://clientappone.example.com", // Used as Audience in JWT validation
+                                IsActive = true // Active client flag
+                            };
+
+            User user = new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        };
+
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            List<string> roles = Enum.GetNames(typeof(UserRoles)).ToList();
+
+            string accessToken = "fake-access-token";
+            string refreshToken = "fake-refresh-token";
+
+            var existingToken = new RefreshToken
+                                {
+                                    Token = refreshToken,
+                                    Expires = DateTime.UtcNow.AddDays(7),
+                                    IsRevoked = false,
+                                    User = user
+                                };
+            var newRefreshToken = new RefreshToken
+                    {
+                        Token = accessToken,
+                        Expires = DateTime.UtcNow.AddDays(7),
+                        IsRevoked = false,
+                    };
+
+            var accessTokenExpiryMinutes = int.TryParse(_configuration["JwtSettings:AccessTokenExpirationMinutes"], out var val) ? val : 15;
+
+            string jwtId = "test-jwt-id";
+
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(client.ClientId))
+                                .Returns(client);
+            _mockTokenService.Setup(s => s.GetExistingToken(refreshToken, id))
+                                .Returns(existingToken);
+            _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
+                                .Returns(accessToken);
+            _mockTokenService.Setup(s => s.GenerateRefreshToken(ipAddress, jwtId, client, user.Id))
+                                .Returns(newRefreshToken);
+            _mockTokenService.Setup(s => s.AddRefreshTokens(newRefreshToken));
+            
+            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            Assert.NotNull(result);
+            Assert.Equal(accessToken, result.AccessToken);
+            Assert.Equal(newRefreshToken.Token, result.RefreshToken);
+            Assert.True(result.AccessTokenExpiresAt > DateTime.UtcNow);
+            _mockTokenService.Verify(x => x.AddRefreshTokens(newRefreshToken), Times.Once);            
+        }
+
+        [Fact]
+        public void RefreshToken_NullRefreshToken_ReturnNull()
+        {
+            string clientId = "client-app-one";
+            
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            string? refreshToken = null!;
+       
+            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            Assert.Null(result);          
+        }
+
+        [Fact]
+        public void RefreshToken_EmptyRefreshToken_ReturnNull()
+        {
+            string clientId = "client-app-one";
+            
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            string? refreshToken = ""!;
+       
+            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            Assert.Null(result);          
+        }
+
+        [Fact]
+        public void RefreshToken_GetClientFailed_ReturnNull()
+        {
+            string clientId = "client-app-one";
+            
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+
+            string refreshToken = "fake-refresh-token";
+
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(clientId))
+                                .Returns((Client?)null!);
+     
+            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            Assert.Null(result);           
+        }
+
+        [Fact]
+        public void RefreshToken_GetExistingTokenFailed_ReturnAuthResponseDTO()
+        {
+            int id = 1;
+            string clientId = "client-app-one";
+            
+            Client client = new Client()
+                            {
+                                Id = 1,
+                                ClientId = clientId, // Unique client identifier used in JWT tokens
+                                Name = "Demo Client Application One",
+                                ClientSecret = "fPXxcJw8TW5sA+S4rl4tIPcKk+oXAqoRBo+1s2yjUS4=", // Base64-encoded secret key
+                                ClientURL = "https://clientappone.example.com", // Used as Audience in JWT validation
+                                IsActive = true // Active client flag
+                            };
+
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            string refreshToken = "fake-refresh-token";
+
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(clientId))
+                                .Returns(client);
+            _mockTokenService.Setup(s => s.GetExistingToken(refreshToken, id))
+                                .Returns((RefreshToken?)null!);
+         
+            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            Assert.Null(result);         
+        }
+
+        [Fact]
+        public void RefreshToken_GenerateAccessTokenFailed_ReturnNull()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            Client client = new Client()
+                            {
+                                Id = 1,
+                                ClientId = clientId, // Unique client identifier used in JWT tokens
+                                Name = "Demo Client Application One",
+                                ClientSecret = "fPXxcJw8TW5sA+S4rl4tIPcKk+oXAqoRBo+1s2yjUS4=", // Base64-encoded secret key
+                                ClientURL = "https://clientappone.example.com", // Used as Audience in JWT validation
+                                IsActive = true // Active client flag
+                            };
+
+            User user = new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        };
+
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            List<string> roles = Enum.GetNames(typeof(UserRoles)).ToList();
+
+            string refreshToken = "fake-refresh-token";
+
+            var existingToken = new RefreshToken
+                                {
+                                    Token = refreshToken,
+                                    Expires = DateTime.UtcNow.AddDays(7),
+                                    IsRevoked = false,
+                                    User = user
+                                };
+
+            string jwtId = "test-jwt-id";
+
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(clientId))
+                                .Returns(client);
+            _mockTokenService.Setup(s => s.GetExistingToken(refreshToken, id))
+                                .Returns(existingToken);
+            _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
+                                .Returns((string?)null!);
+
+            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            Assert.Null(result);     
+        }
+
+        [Fact]
+        public void RefreshToken_GenerateRefreshTokenFailed_ReturnAuthResponseDTO()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            Client client = new Client()
+                            {
+                                Id = 1,
+                                ClientId = clientId, // Unique client identifier used in JWT tokens
+                                Name = "Demo Client Application One",
+                                ClientSecret = "fPXxcJw8TW5sA+S4rl4tIPcKk+oXAqoRBo+1s2yjUS4=", // Base64-encoded secret key
+                                ClientURL = "https://clientappone.example.com", // Used as Audience in JWT validation
+                                IsActive = true // Active client flag
+                            };
+
+            User user = new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        };
+
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            List<string> roles = Enum.GetNames(typeof(UserRoles)).ToList();
+
+            string accessToken = "fake-access-token";
+            string refreshToken = "fake-refresh-token";
+
+            var existingToken = new RefreshToken
+                                {
+                                    Token = refreshToken,
+                                    Expires = DateTime.UtcNow.AddDays(7),
+                                    IsRevoked = false,
+                                    User = user
+                                };
+
+            var accessTokenExpiryMinutes = int.TryParse(_configuration["JwtSettings:AccessTokenExpirationMinutes"], out var val) ? val : 15;
+
+            string jwtId = "test-jwt-id";
+
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(client.ClientId))
+                                .Returns(client);
+            _mockTokenService.Setup(s => s.GetExistingToken(refreshToken, id))
+                                .Returns(existingToken);
+            _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
+                                .Returns(accessToken);
+            _mockTokenService.Setup(s => s.GenerateRefreshToken(ipAddress, jwtId, client, user.Id))
+                                .Returns((RefreshToken?)null);
+            
+            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            Assert.Null(result);         
         }
     }
 }

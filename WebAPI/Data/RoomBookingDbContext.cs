@@ -22,5 +22,7 @@ namespace AIBookingSystem.Data
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Booking> Bookings { get; set;}
         public DbSet<Equipment> Equipments {get; set;}
+        public DbSet<Client> Clients { get; set; } = null!;
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
     }
 }

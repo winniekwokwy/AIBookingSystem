@@ -20,5 +20,9 @@ namespace AIBookingSystem.Services
 
         bool IsUserValid(int id, string username);
 
+        AuthResponseDTO? AuthenticateUser(UserLoginDTO loginDto, string ipAddress);
+        AuthResponseDTO? RefreshToken(string refreshToken, string clientId, string ipAddress);
+        bool RevokeRefreshToken(string refreshToken);
+
     }
 }
