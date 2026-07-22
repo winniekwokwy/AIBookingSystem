@@ -395,6 +395,61 @@ namespace WebAPI.Tests.Repositories
             Assert.Equal(name, user.Name);
             Assert.Equal(role, user.Role);
             Assert.Equal(status, user.Status);
-        }   
+        } 
+
+        [Fact]
+        public void AuthenticateUser_LoginDTONull_ReturnNull()
+        {
+            var context = GetInMemoryDbContext(true);
+            var repository = new UserRepository(context);
+
+            var user = repository.AuthenticateUser((UserLoginDTO?)null!);
+
+            Assert.Null(user);
+        } 
+
+        [Fact]
+        public void AuthenticateUser_UserNotFound_ReturnNull()
+        {
+            string username = "applemango1";
+            string password = "App13M@ng0";
+            string clientId = "client-app-one";
+
+            var loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            var context = GetInMemoryDbContext(true);
+            var repository = new UserRepository(context);
+
+            var user = repository.AuthenticateUser(loginDTO);
+
+            Assert.Null(user);
+        }
+
+        [Fact]
+        public void AuthenticateUser_PasswordNotMatch_ReturnNull()
+        {
+            string username = "applemango";
+            string password = "App13M@ng0!";
+            string clientId = "client-app-one";
+
+            var loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            var context = GetInMemoryDbContext(true);
+            var repository = new UserRepository(context);
+
+            var user = repository.AuthenticateUser(loginDTO);
+
+            Assert.Null(user);
+        }
     }
 }

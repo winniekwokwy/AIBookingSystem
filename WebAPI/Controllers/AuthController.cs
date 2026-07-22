@@ -13,26 +13,9 @@ namespace AIBookingSystem.Controllers
         {
             _userService = userService;
         }
-        // POST api/auth/register
-        // Endpoint for user registration
-        // [HttpPost]
-        // public  IActionResult CreateUser(UserCreateDTO userCreateDTO)
-        // {
-        //     // Validate input model (e.g., required fields, formats)
-        //     if (!ModelState.IsValid)
-        //         return BadRequest(ModelState); // Return 400 with validation errors
-        //     // Call UserService to register user
-        //     var userDtO = _userService.CreateUser(userCreateDTO);
-        //     // If registration fails (email exists), return 400 with custom message
-        //     if (userDtO == null)
-        //         return BadRequest(new { message = "Username already exists." });
-        //     // Successful registration: return 200 OK with success message
-        //     return Ok(new { message = "User created successfully." });
-        // }
-        // POST api/auth/login
-        // Endpoint for user login and JWT token generation
+
         [HttpPost("login")]
-        public IActionResult Login(UserLoginDTO loginDto)
+        public ActionResult<AuthResponseDTO> Login(UserLoginDTO loginDto)
         {
             // Validate input model (email, password, clientId)
             if (!ModelState.IsValid)
@@ -43,14 +26,14 @@ namespace AIBookingSystem.Controllers
             var authResponse = _userService.AuthenticateUser(loginDto, ipAddress);
             // If authentication fails (invalid credentials or client), return 401 Unauthorized
             if (authResponse == null)
-                return Unauthorized(new { message = "Invalid credentials or client." });
+                return Unauthorized("Invalid credentials or client.");
             // Successful login: return 200 OK with tokens and expiry info
             return Ok(authResponse);
         }
         // POST api/auth/refresh-token
         // Endpoint to obtain a new access token using a refresh token
         [HttpPost("refresh-token")]
-        public IActionResult RefreshToken(RefreshTokenRequestDTO refreshRequest)
+        public ActionResult<AuthResponseDTO> RefreshToken(RefreshTokenRequestDTO refreshRequest)
         {
             // Validate input model (refreshToken and clientId required)
             if (!ModelState.IsValid)
@@ -61,7 +44,7 @@ namespace AIBookingSystem.Controllers
             var authResponse = _userService.RefreshToken(refreshRequest.RefreshToken, refreshRequest.ClientId, ipAddress);
             // If refresh token or client is invalid, return 401 Unauthorized
             if (authResponse == null)
-                return Unauthorized(new { message = "Invalid refresh token or client." });
+                return Unauthorized("Invalid refresh token or client." );
             // Successful token refresh: return 200 OK with new tokens and expiry info
             return Ok(authResponse);
         }

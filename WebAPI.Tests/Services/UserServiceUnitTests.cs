@@ -1292,7 +1292,7 @@ namespace WebAPI.Tests.Services
             _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
                                 .Returns(accessToken);
             _mockTokenService.Setup(s => s.GenerateRefreshToken(ipAddress, jwtId, client, user.Id))
-                                .Returns((RefreshToken?)null);
+                                .Returns((RefreshToken?)null!);
             
             var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
             Assert.Null(result);         
