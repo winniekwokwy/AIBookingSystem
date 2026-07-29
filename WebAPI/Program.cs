@@ -1,6 +1,7 @@
 using AIBookingSystem.Repositories;
 using AIBookingSystem.Services;
 using AIBookingSystem.Data;
+using AIBookingSystem.Models;
 
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
@@ -31,8 +32,10 @@ builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddTransient<DataSeeder>();
 
 builder.Services.AddMemoryCache();
-// Register the ClientCacheService as singleton to maintain client info cache across requests
+// Keep the client cache service singleton so its in-memory cache is shared across requests,
+// but resolve the repository from a scoped provider each time it needs data.
 builder.Services.AddSingleton<IClientCacheService, ClientCacheService>();
+builder.Services.AddScoped<IClientCacheRepository, ClientCacheRepository>();
 // Register application services with Scoped lifetime (per HTTP request)
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
@@ -64,7 +67,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             if (string.IsNullOrEmpty(clientId) || clientCacheInstance == null)
                 return Enumerable.Empty<SecurityKey>();
             // Retrieve the client info synchronously from cache
-            var client = clientCacheInstance.Value.GetClientByClientId(clientId);
+            var client = clientCacheInstance.Value.GetClientByClientId(clientId).Result;
             if (client == null)
                 return Enumerable.Empty<SecurityKey>();
             // Convert the client's stored Base64 secret into a byte array for key
@@ -93,7 +96,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 return;
             }
             // Asynchronously get client info from cache or database
-            var client = clientCacheInstance.Value.GetClientByClientId(clientId);
+            var client = clientCacheInstance.Value.GetClientByClientId(clientId).Result;
             if (client == null)
             {
                 // Fail if client not found
@@ -113,6 +116,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 });
 
 var app = builder.Build();
+clientCacheInstance = new Lazy<IClientCacheService>(() =>
+    app.Services.GetRequiredService<IClientCacheService>());
 
 // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())

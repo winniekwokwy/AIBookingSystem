@@ -83,51 +83,47 @@ namespace AIBookingSystem.Controllers
         [Authorize(Roles = "Admin")]
         public ActionResult<UserDTO> CreateUser([FromBody] UserCreateDTO createDto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState); 
+
             string message="";
 
-            if (createDto != null)
+            if (createDto.Role == "")
             {
-                if (createDto.Role == null || createDto.Role == "")
+                message = "Please provide user role.";
+            }
+            else
+            {
+                if (!_userService.IsRoleValid(createDto.Role))
                 {
-                    message = "Please provide user role.";
+                    message = "Role can be User or Admin only.";
                 }
-                else
+                else 
                 {
-                    if (!_userService.IsRoleValid(createDto.Role))
-                    {
-                        message = "Role can be User or Admin only.";
+                    if (createDto.Status == ""){
+                        message = "Please provide user status.";
                     }
                     else 
                     {
-                        if (createDto.Status == null || createDto.Status == ""){
-                            message = "Please provide user status.";
-                        }
-                        else 
+                        if (!_userService.IsStatusValid(_userService.StatusMappingString2Enum(createDto.Status)))
                         {
-                            if (!_userService.IsStatusValid(_userService.StatusMappingString2Enum(createDto.Status)))
+                            message = "Status can be Active or Inactive only.";
+                        }
+                        else
+                        {
+                            var newUser = _userService.CreateUser(createDto);
+                            if (newUser == null)
                             {
-                                message = "Status can be Active or Inactive only.";
+                                message = "User is not created successfully. Username is in use. Please choose another one.";
                             }
-                            else
-                            {
-                                var newUser = _userService.CreateUser(createDto);
-                                if (newUser == null)
-                                {
-                                    message = "User is not created successfully. Username is in use. Please choose another one.";
-                                }
-                                else {
+                            else {
 
-                                    return CreatedAtAction(nameof(GetUserbyID), new { id = newUser.Id }, newUser);   
-                                    
-                                }
+                                return CreatedAtAction(nameof(GetUserbyID), new { id = newUser.Id }, newUser);   
+                                
                             }
                         }
                     }
                 }
-            }
-            else 
-            {
-                message = "The UserCreateDTO is null.";
             }
             _logger.LogError(message);        
             return BadRequest (message);

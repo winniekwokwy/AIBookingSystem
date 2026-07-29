@@ -205,7 +205,7 @@ namespace AIBookingSystem.Services
             return true;
         }
 
-        public AuthResponseDTO? AuthenticateUser(UserLoginDTO loginDto, string ipAddress)
+        public async Task<AuthResponseDTO?> AuthenticateUser(UserLoginDTO loginDto, string ipAddress)
         {
             if ((loginDto == null) || (ipAddress == null) || (ipAddress == ""))
                 return null;
@@ -214,15 +214,17 @@ namespace AIBookingSystem.Services
                 return null;
 
             // Retrieve user by email with roles eagerly loaded; only active users allowed
-            var user = _userRepo.AuthenticateUser(loginDto);
-            if (user == null)
+            var user = _userRepo.GetUserbyUsername(loginDto.UserName);
+            // Verify user exists and password matches the stored hashed password
+            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
-                return null;
+               return null; // Invalid credentials
             }
+
             // Extract list of role names for inclusion in JWT claims
             List<string> roles = Enum.GetNames(typeof(UserRoles)).ToList();
             // Retrieve client info by ClientId
-            var client = _clientCacheService.GetClientByClientId(loginDto.ClientId);
+            var client = await _clientCacheService.GetClientByClientId(loginDto.ClientId);
             if (client == null)
             {
                 // Fail if client does not exist or is inactive
@@ -251,12 +253,12 @@ namespace AIBookingSystem.Services
         }
 
         // Refreshes an expired access token using a valid refresh token and client ID
-        public AuthResponseDTO? RefreshToken(string refreshToken, string clientId, string ipAddress)
+        public async Task<AuthResponseDTO?> RefreshToken(string refreshToken, string clientId, string ipAddress)
         {
             if (refreshToken == null || refreshToken == "" || clientId == null || clientId == "" || ipAddress == null || ipAddress == "")
                 return null;
             // Retrieve client info by clientId for validation
-            var client =  _clientCacheService.GetClientByClientId(clientId);
+            var client =  await _clientCacheService.GetClientByClientId(clientId);
             if (client == null)
             {
                 // Client invalid or inactive; reject refresh
@@ -265,10 +267,13 @@ namespace AIBookingSystem.Services
             // Look up the refresh token in database, including related user and roles for new token generation
         
             var existingToken = _tokenService.GetExistingToken(refreshToken, client.Id);
-            if (existingToken == null)
-            {
-                return null;
-            }
+            
+            // Validate refresh token existence, revocation status, and expiration
+            if (existingToken == null || existingToken.IsRevoked || existingToken.Expires <= DateTime.UtcNow)
+                return null; // Invalid refresh token
+            // Revoke old refresh token immediately to prevent reuse
+            _tokenService.RevokeToken(existingToken);
+
             var user = existingToken.User;
             if (user == null)
                 return null;
@@ -296,7 +301,13 @@ namespace AIBookingSystem.Services
         // Revokes an existing refresh token to prevent further use
         public bool RevokeRefreshToken(string refreshToken)
         {
-            return _tokenService.RevokeRefreshToken(refreshToken);
+            var existingToken = _tokenService.GetExistingToken(refreshToken);
+            // Return false if token not found or already revoked
+            if (existingToken == null || existingToken.IsRevoked)
+                return false;
+            // Mark token as revoked and record revocation time
+            _tokenService.RevokeToken(existingToken);
+            return true; // Indicate successful revocation
         }
     }
 }

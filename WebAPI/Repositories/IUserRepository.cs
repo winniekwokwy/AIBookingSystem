@@ -10,6 +10,5 @@ namespace AIBookingSystem.Repositories
         User? CreateUser(User user);
         bool IsUserValid(int UserId, string createdBy);
         bool UsernameInUse(string username);
-        User? AuthenticateUser(UserLoginDTO loginDto);
     }
 }

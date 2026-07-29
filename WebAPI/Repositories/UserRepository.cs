@@ -88,22 +88,5 @@ namespace AIBookingSystem.Repositories
             }
             return null;
         }
-
-        public User? AuthenticateUser(UserLoginDTO loginDto)
-        {
-            if (loginDto == null)
-                return null;
-            // Retrieve user by email with roles eagerly loaded; only active users allowed
-            var user = _dBContext.Users
-                .FirstOrDefault(u => u.UserName == loginDto.UserName && u.Status == UserStatus.Active);
-
-            // Verify user exists and password matches the stored hashed password
-            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
-            {
-               return null; // Invalid credentials
-            }
-            // Retrieve client info by ClientId
-            return user;
-        }
     }
 }

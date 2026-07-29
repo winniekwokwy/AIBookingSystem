@@ -45,7 +45,7 @@ namespace WebAPI.Tests.Controllers
         }
 
         [Fact]
-        public void Login_ValidUser_ReturnOK()
+        public async Task Login_ValidUser_ReturnOK()
         {
             string username = "applemango";
             string password = "App13M@ng0";
@@ -69,10 +69,10 @@ namespace WebAPI.Tests.Controllers
             };
 
             _mockUserService.Setup(s => s.AuthenticateUser(loginDTO, ipAddress))
-                            .Returns(authResponse);
+                            .ReturnsAsync(authResponse);
 
             var authController = CreateController();
-            var result = authController.Login(loginDTO);
+            var result = await authController.Login(loginDTO);
 
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             var returned = Assert.IsAssignableFrom<AuthResponseDTO>(okResult.Value);
@@ -82,7 +82,7 @@ namespace WebAPI.Tests.Controllers
         }
 
         [Fact]
-        public void Login_UnauthenticatedUser_ReturnUnauthorized()
+        public async Task Login_UnauthenticatedUser_ReturnUnauthorized()
         {
             string username = "applemango1";
             string password = "App13M@ng0";
@@ -99,10 +99,10 @@ namespace WebAPI.Tests.Controllers
             string ipAddress = "127.0.0.1";
 
             _mockUserService.Setup(s => s.AuthenticateUser(loginDTO, ipAddress))
-                            .Returns((AuthResponseDTO?)null!);
+                            .ReturnsAsync((AuthResponseDTO?)null!);
 
             var authController = CreateController();
-            var result = authController.Login(loginDTO);
+            var result = await authController.Login(loginDTO);
 
             var unauthorizedResult = result.Result as UnauthorizedObjectResult;
             Assert.IsType<UnauthorizedObjectResult>(unauthorizedResult);
@@ -110,7 +110,7 @@ namespace WebAPI.Tests.Controllers
         }
 
         [Fact]
-        public void Login_InvalidInput_ReturnBadRequest()
+        public async Task Login_InvalidInput_ReturnBadRequest()
         {
             string password = "App13M@ng0";
             string clientId = "client-app-one";
@@ -124,14 +124,14 @@ namespace WebAPI.Tests.Controllers
 
             var authController = CreateController();
             authController.ModelState.AddModelError("username", "Username is required.");
-            var result = authController.Login(loginDTO);
+            var result = await authController.Login(loginDTO);
 
             var badRequestResult = result.Result as BadRequestObjectResult;
             Assert.IsType<BadRequestObjectResult>(badRequestResult);
         }
 
         [Fact]
-        public void Login_EmptyInput_ReturnBadRequest()
+        public async Task Login_EmptyInput_ReturnBadRequest()
         {
             string password = "App13M@ng0";
             string clientId = "client-app-one";
@@ -145,14 +145,14 @@ namespace WebAPI.Tests.Controllers
 
             var authController = CreateController();
             authController.ModelState.AddModelError("username", "Username must at least have 8 characters.");
-            var result = authController.Login(loginDTO);
+            var result = await authController.Login(loginDTO);
 
             var badRequestResult = result.Result as BadRequestObjectResult;
             Assert.IsType<BadRequestObjectResult>(badRequestResult);
         }
 
         [Fact]
-        public void RefreshToken_ValidRefreshTokenRequestDTO_ReturnOK()
+        public async Task RefreshToken_ValidRefreshTokenRequestDTO_ReturnOK()
         {
             string token = "refresh token";
             string clientId = "client-app-one";
@@ -174,10 +174,10 @@ namespace WebAPI.Tests.Controllers
             };
 
             _mockUserService.Setup(s => s.RefreshToken(refreshTokenRequestDTO.RefreshToken, refreshTokenRequestDTO.ClientId, ipAddress))
-                            .Returns(authResponse);
+                            .ReturnsAsync(authResponse);
 
             var authController = CreateController();
-            var result = authController.RefreshToken(refreshTokenRequestDTO);
+            var result = await authController.RefreshToken(refreshTokenRequestDTO);
 
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             var returned = Assert.IsAssignableFrom<AuthResponseDTO>(okResult.Value);
@@ -187,7 +187,7 @@ namespace WebAPI.Tests.Controllers
         }
 
         [Fact]
-        public void RefreshToken_ServiceReturnFailed_ReturnUnauthorized()
+        public async Task RefreshToken_ServiceReturnFailed_ReturnUnauthorized()
         {
             string token = "refresh token";
             string clientId = "client-app-one";
@@ -210,10 +210,10 @@ namespace WebAPI.Tests.Controllers
             };
 
             _mockUserService.Setup(s => s.RefreshToken(refreshTokenRequestDTO.RefreshToken, refreshTokenRequestDTO.ClientId, ipAddress))
-                            .Returns((AuthResponseDTO?)null!);
+                            .ReturnsAsync((AuthResponseDTO?)null!);
 
             var authController = CreateController();
-            var result = authController.RefreshToken(refreshTokenRequestDTO);
+            var result = await authController.RefreshToken(refreshTokenRequestDTO);
 
             var unauthorizedResult = result.Result as UnauthorizedObjectResult;
             Assert.IsType<UnauthorizedObjectResult>(unauthorizedResult);
@@ -221,7 +221,7 @@ namespace WebAPI.Tests.Controllers
         }
 
         [Fact]
-        public void RefreshToken_InvalidInput_ReturnBadRequest()
+        public async Task RefreshToken_InvalidInput_ReturnBadRequest()
         {
             string token = "refresh token";
             string clientId = "client-app-one";
@@ -234,7 +234,7 @@ namespace WebAPI.Tests.Controllers
 
             var authController = CreateController();
             authController.ModelState.AddModelError("RefreshToken", "RefreshToken is required.");
-            var result = authController.RefreshToken(refreshTokenRequestDTO);
+            var result = await authController.RefreshToken(refreshTokenRequestDTO);
 
             var badRequestResult = result.Result as BadRequestObjectResult;
             Assert.IsType<BadRequestObjectResult>(badRequestResult);

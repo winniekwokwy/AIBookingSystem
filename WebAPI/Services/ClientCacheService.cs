@@ -1,7 +1,9 @@
 using AIBookingSystem.Data;
 using AIBookingSystem.Models;
+using AIBookingSystem.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 namespace AIBookingSystem.Services
 {
     public class ClientCacheService : IClientCacheService
@@ -12,6 +14,7 @@ namespace AIBookingSystem.Services
         private readonly IServiceProvider _serviceProvider;
         // Memory cache instance for storing cached client data in-memory
         private readonly IMemoryCache _memoryCache;
+
         // Constructor injects required services: IServiceProvider and IMemoryCache
         public ClientCacheService(IServiceProvider serviceProvider, IMemoryCache memoryCache)
         {
@@ -22,7 +25,7 @@ namespace AIBookingSystem.Services
         // First attempts to get the client from in-memory cache.
         // If the client is not found in cache, fetches from the database,
         // caches the client, then returns it.
-        public Client? GetClientByClientId(string clientId)
+        public async Task<Client?> GetClientByClientId(string clientId)
         {
             // Construct cache key for this client using prefix and clientId
             var cacheKey = CacheKeyPrefix + clientId;
@@ -32,12 +35,10 @@ namespace AIBookingSystem.Services
                 // Cache hit - return the cached client immediately
                 return client;
             }
-            // Cache miss - create a new scope to get a fresh DbContext instance
+            // Cache miss - resolve the repository from a child scope so it can use the scoped DbContext safely.
             using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<RoomBookingDbContext>();
-            // Query the database asynchronously for active client matching the clientId
-            client = dbContext.Clients.AsNoTracking()
-                .FirstOrDefault(c => c.ClientId == clientId && c.IsActive);
+            var clientCacheRepository = scope.ServiceProvider.GetRequiredService<IClientCacheRepository>();
+            client = await clientCacheRepository.GetClientByClientId(clientId);
             if (client != null)
             {
                 // Store the retrieved client into cache with expiration policy

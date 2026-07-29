@@ -113,5 +113,15 @@ namespace AIBookingSystem.Services
         {
             return _tokenRepo.RevokeRefreshToken(refreshToken);
         }
+
+        public void RevokeToken(RefreshToken token)
+        {
+            _tokenRepo.RevokeToken(token);
+        }
+
+        public RefreshToken? GetExistingToken(string refreshToken)
+        {
+            return _tokenRepo.GetExistingToken(refreshToken);
+        }
     }
 }

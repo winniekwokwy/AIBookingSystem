@@ -10,5 +10,9 @@ namespace AIBookingSystem.Services
         RefreshToken? GetExistingToken(string refreshToken, int ClientId);
 
         bool RevokeRefreshToken(string refreshToken);
+
+        void RevokeToken(RefreshToken token);
+
+        RefreshToken? GetExistingToken(string refreshToken);
     }
 }

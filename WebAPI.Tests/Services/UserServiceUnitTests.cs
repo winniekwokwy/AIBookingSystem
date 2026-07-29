@@ -9,6 +9,8 @@ using Bogus;
 using System.Net.Cache;
 using System.ComponentModel;
 using Microsoft.Extensions.Configuration;
+using System.Reflection;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebAPI.Tests.Services
 
@@ -690,7 +692,7 @@ namespace WebAPI.Tests.Services
         }
 
         [Fact]
-        public void AuthenticateUser_ValidParameters_ReturnAuthResponseDTO()
+        public async Task AuthenticateUser_ValidParameters_ReturnAuthResponseDTO()
         {
             int id = 1;
             string name = "May Nicolaos";
@@ -742,18 +744,24 @@ namespace WebAPI.Tests.Services
 
             string jwtId = "test-jwt-id";
 
-            _mockUserRepo.Setup(r => r.AuthenticateUser(loginDTO))
+            _mockUserRepo.Setup(r => r.GetUserbyUsername(loginDTO.UserName))
                         .Returns(user);
 
-            _mockClientCacheService.Setup(s => s.GetClientByClientId(client.ClientId))
-                                .Returns(client);
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(loginDTO.ClientId))
+                                .ReturnsAsync(client);
             _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
                                 .Returns(accessToken);
             _mockTokenService.Setup(s => s.GenerateRefreshToken(ipAddress, jwtId, client, user.Id))
                                 .Returns(refreshToken);
             _mockTokenService.Setup(s => s.AddRefreshTokens(refreshToken));
             
-            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            var result = await _userService.AuthenticateUser(loginDTO, ipAddress);
+            _mockUserRepo.Verify(r => r.GetUserbyUsername(loginDTO.UserName), Times.Once);
+            _mockClientCacheService.Verify(s => s.GetClientByClientId(client.ClientId), Times.Once);
+            _mockTokenService.Verify(s => s.GenerateAccessToken(user, roles, out jwtId, client), Times.Once);
+            _mockTokenService.Verify(s => s.GenerateRefreshToken(ipAddress, jwtId, client, user.Id), Times.Once);
+            _mockTokenService.Verify(s => s.AddRefreshTokens(refreshToken), Times.Once);
+            
             Assert.NotNull(result);
             Assert.Equal(accessToken, result.AccessToken);
             Assert.Equal(refreshToken.Token, result.RefreshToken);
@@ -761,8 +769,77 @@ namespace WebAPI.Tests.Services
             _mockTokenService.Verify(x => x.AddRefreshTokens(refreshToken), Times.Once);
         }
 
+       [Fact]
+        public async Task AuthenticateUser_PasswordNotMatch_ReturnNull()
+        {
+            int id = 1;
+            string name = "May Nicolaos";
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string clientId = "client-app-one";
+            
+            Client client = new Client()
+                            {
+                                Id = 1,
+                                ClientId = clientId, // Unique client identifier used in JWT tokens
+                                Name = "Demo Client Application One",
+                                ClientSecret = "fPXxcJw8TW5sA+S4rl4tIPcKk+oXAqoRBo+1s2yjUS4=", // Base64-encoded secret key
+                                ClientURL = "https://clientappone.example.com", // Used as Audience in JWT validation
+                                IsActive = true // Active client flag
+                            };
+
+            UserLoginDTO loginDTO = new UserLoginDTO
+            {
+                UserName = username,
+                Password = password,
+                ClientId = clientId
+            };
+
+            User user = new User
+                        {
+                            Id = id,
+                            Name = name,
+                            UserName = username,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password+"!"),
+                            Role = UserRoles.Admin,
+                            Status = UserStatus.Active
+                        };
+
+            var faker = new Faker();
+            string ipAddress = faker.Internet.Ipv6();
+            
+            List<string> roles = Enum.GetNames(typeof(UserRoles)).ToList();
+
+            string accessToken = "fake-refresh-token";
+            var refreshToken = new RefreshToken
+                                {
+                                    Token = accessToken,
+                                    Expires = DateTime.UtcNow.AddDays(7),
+                                    IsRevoked = false
+                                };
+
+            var accessTokenExpiryMinutes = int.TryParse(_configuration["JwtSettings:AccessTokenExpirationMinutes"], out var val) ? val : 15;
+
+            string jwtId = "test-jwt-id";
+
+            _mockUserRepo.Setup(r => r.GetUserbyUsername(loginDTO.UserName))
+                        .Returns(user);
+
+            _mockClientCacheService.Setup(s => s.GetClientByClientId(loginDTO.ClientId))
+                                .ReturnsAsync(client);
+            _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
+                                .Returns(accessToken);
+            _mockTokenService.Setup(s => s.GenerateRefreshToken(ipAddress, jwtId, client, user.Id))
+                                .Returns(refreshToken);
+            _mockTokenService.Setup(s => s.AddRefreshTokens(refreshToken));
+            
+            var result = await _userService.AuthenticateUser(loginDTO, ipAddress);
+            
+            Assert.Null(result);
+        }
+
         [Fact]
-        public void AuthenticateUser_RepoAuthenticateUserFailed_ReturnNull()
+        public async Task AuthenticateUser_RepoAuthenticateUserFailed_ReturnNull()
         {
             string username = "maynicolaos";
             string password = "M@yNic01@0s";
@@ -778,27 +855,27 @@ namespace WebAPI.Tests.Services
             var faker = new Faker();
             string ipAddress = faker.Internet.Ipv6();
      
-            _mockUserRepo.Setup(r => r.AuthenticateUser(loginDTO))
+            _mockUserRepo.Setup(r => r.GetUserbyUsername(loginDTO.UserName))
                         .Returns((User?)null);
 
-            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            var result = await _userService.AuthenticateUser(loginDTO, ipAddress);
             Assert.Null(result);
         }
 
         [Fact]
-        public void AuthenticateUser_InvalidLoginDTO_ReturnNull()
+        public async Task AuthenticateUser_InvalidLoginDTO_ReturnNull()
         {
             UserLoginDTO? loginDTO = null!;
             
             var faker = new Faker();
             string ipAddress = faker.Internet.Ipv6();
             
-            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            var result = await _userService.AuthenticateUser(loginDTO, ipAddress);
             Assert.Null(result);
         }        
 
         [Fact]
-        public void AuthenticateUser_IpAddressNull_ReturnNull()
+        public async Task AuthenticateUser_IpAddressNull_ReturnNull()
         {
 
             string username = "maynicolaos";
@@ -814,12 +891,12 @@ namespace WebAPI.Tests.Services
 
             string? ipAddress = null!;
                       
-            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            var result = await _userService.AuthenticateUser(loginDTO, ipAddress);
             Assert.Null(result);
         }
 
         [Fact]
-        public void AuthenticateUser_IpAddressEmpty_ReturnNull()
+        public async Task AuthenticateUser_IpAddressEmpty_ReturnNull()
         {
 
             string username = "maynicolaos";
@@ -835,12 +912,12 @@ namespace WebAPI.Tests.Services
 
             string? ipAddress = "";
                       
-            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            var result = await _userService.AuthenticateUser(loginDTO, ipAddress);
             Assert.Null(result);
         }
 
         [Fact]
-        public void AuthenticateUser_InvalidIpAddress_ReturnNull()
+        public async Task AuthenticateUser_InvalidIpAddress_ReturnNull()
         {
 
             string username = "maynicolaos";
@@ -856,12 +933,12 @@ namespace WebAPI.Tests.Services
 
             string ipAddress = "10.fdsf.122.fsfds";
                       
-            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            var result = await _userService.AuthenticateUser(loginDTO, ipAddress);
             Assert.Null(result);
         }
 
         [Fact]
-        public void AuthenticateUser_GetClientFailed_ReturnAuthResponseDTO()
+        public async Task AuthenticateUser_GetClientFailed_ReturnAuthResponseDTO()
         {
             int id = 1;
             string name = "May Nicolaos";
@@ -889,18 +966,18 @@ namespace WebAPI.Tests.Services
             var faker = new Faker();
             string ipAddress = faker.Internet.Ipv6();
             
-            _mockUserRepo.Setup(r => r.AuthenticateUser(loginDTO))
+            _mockUserRepo.Setup(r => r.GetUserbyUsername(loginDTO.UserName))
                         .Returns(user);
 
             _mockClientCacheService.Setup(s => s.GetClientByClientId(clientId))
-                                .Returns((Client?)null);
+                                .ReturnsAsync((Client?)null);
            
-            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            var result = await _userService.AuthenticateUser(loginDTO, ipAddress);
             Assert.Null(result);
         }
 
         [Fact]
-        public void AuthenticateUser_GenerateAccessTokenFailed_ReturnNull()
+        public async Task AuthenticateUser_GenerateAccessTokenFailed_ReturnNull()
         {
             int id = 1;
             string name = "May Nicolaos";
@@ -952,20 +1029,20 @@ namespace WebAPI.Tests.Services
 
             string jwtId = "test-jwt-id";
 
-            _mockUserRepo.Setup(r => r.AuthenticateUser(loginDTO))
+            _mockUserRepo.Setup(r => r.GetUserbyUsername(loginDTO.UserName))
                         .Returns(user);
 
             _mockClientCacheService.Setup(s => s.GetClientByClientId(client.ClientId))
-                                .Returns(client);
+                                .ReturnsAsync(client);
             _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
                                 .Returns((string?)null!);
             
-            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            var result = await _userService.AuthenticateUser(loginDTO, ipAddress);
             Assert.Null(result);
         }
 
         [Fact]
-        public void AuthenticateUser_GenerateRefreshTokenFailed_ReturnNull()
+        public async Task AuthenticateUser_GenerateRefreshTokenFailed_ReturnNull()
         {
             int id = 1;
             string name = "May Nicolaos";
@@ -1017,22 +1094,22 @@ namespace WebAPI.Tests.Services
 
             string jwtId = "test-jwt-id";
 
-            _mockUserRepo.Setup(r => r.AuthenticateUser(loginDTO))
+            _mockUserRepo.Setup(r => r.GetUserbyUsername(loginDTO.UserName))
                         .Returns(user);
 
             _mockClientCacheService.Setup(s => s.GetClientByClientId(client.ClientId))
-                                .Returns(client);
+                                .ReturnsAsync(client);
             _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
                                 .Returns(accessToken);
             _mockTokenService.Setup(s => s.GenerateRefreshToken(ipAddress, jwtId, client, user.Id))
                                 .Returns((RefreshToken?)null!);
             
-            var result = _userService.AuthenticateUser(loginDTO, ipAddress);
+            var result = await _userService.AuthenticateUser(loginDTO, ipAddress);
             Assert.Null(result);
         }
 
         [Fact]
-        public void RefreshToken_ValidParameters_ReturnAuthResponseDTO()
+        public async Task RefreshToken_ValidParameters_ReturnAuthResponseDTO()
         {
             int id = 1;
             string name = "May Nicolaos";
@@ -1087,7 +1164,7 @@ namespace WebAPI.Tests.Services
             string jwtId = "test-jwt-id";
 
             _mockClientCacheService.Setup(s => s.GetClientByClientId(client.ClientId))
-                                .Returns(client);
+                                .ReturnsAsync(client);
             _mockTokenService.Setup(s => s.GetExistingToken(refreshToken, id))
                                 .Returns(existingToken);
             _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
@@ -1096,7 +1173,7 @@ namespace WebAPI.Tests.Services
                                 .Returns(newRefreshToken);
             _mockTokenService.Setup(s => s.AddRefreshTokens(newRefreshToken));
             
-            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            var result = await _userService.RefreshToken(refreshToken, clientId, ipAddress);
             Assert.NotNull(result);
             Assert.Equal(accessToken, result.AccessToken);
             Assert.Equal(newRefreshToken.Token, result.RefreshToken);
@@ -1105,7 +1182,7 @@ namespace WebAPI.Tests.Services
         }
 
         [Fact]
-        public void RefreshToken_NullRefreshToken_ReturnNull()
+        public async Task RefreshToken_NullRefreshToken_ReturnNull()
         {
             string clientId = "client-app-one";
             
@@ -1114,12 +1191,12 @@ namespace WebAPI.Tests.Services
             
             string? refreshToken = null!;
        
-            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            var result = await _userService.RefreshToken(refreshToken, clientId, ipAddress);
             Assert.Null(result);          
         }
 
         [Fact]
-        public void RefreshToken_EmptyRefreshToken_ReturnNull()
+        public async Task RefreshToken_EmptyRefreshToken_ReturnNull()
         {
             string clientId = "client-app-one";
             
@@ -1128,12 +1205,12 @@ namespace WebAPI.Tests.Services
             
             string? refreshToken = ""!;
        
-            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            var result = await _userService.RefreshToken(refreshToken, clientId, ipAddress);
             Assert.Null(result);          
         }
 
         [Fact]
-        public void RefreshToken_GetClientFailed_ReturnNull()
+        public async Task RefreshToken_GetClientFailed_ReturnNull()
         {
             string clientId = "client-app-one";
             
@@ -1143,14 +1220,14 @@ namespace WebAPI.Tests.Services
             string refreshToken = "fake-refresh-token";
 
             _mockClientCacheService.Setup(s => s.GetClientByClientId(clientId))
-                                .Returns((Client?)null!);
+                                .ReturnsAsync((Client?)null!);
      
-            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            var result = await _userService.RefreshToken(refreshToken, clientId, ipAddress);
             Assert.Null(result);           
         }
 
         [Fact]
-        public void RefreshToken_GetExistingTokenFailed_ReturnAuthResponseDTO()
+        public async Task RefreshToken_GetExistingTokenFailed_ReturnAuthResponseDTO()
         {
             int id = 1;
             string clientId = "client-app-one";
@@ -1171,16 +1248,16 @@ namespace WebAPI.Tests.Services
             string refreshToken = "fake-refresh-token";
 
             _mockClientCacheService.Setup(s => s.GetClientByClientId(clientId))
-                                .Returns(client);
+                                .ReturnsAsync(client);
             _mockTokenService.Setup(s => s.GetExistingToken(refreshToken, id))
                                 .Returns((RefreshToken?)null!);
          
-            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            var result = await _userService.RefreshToken(refreshToken, clientId, ipAddress);
             Assert.Null(result);         
         }
 
         [Fact]
-        public void RefreshToken_GenerateAccessTokenFailed_ReturnNull()
+        public async Task RefreshToken_GenerateAccessTokenFailed_ReturnNull()
         {
             int id = 1;
             string name = "May Nicolaos";
@@ -1226,18 +1303,18 @@ namespace WebAPI.Tests.Services
             string jwtId = "test-jwt-id";
 
             _mockClientCacheService.Setup(s => s.GetClientByClientId(clientId))
-                                .Returns(client);
+                                .ReturnsAsync(client);
             _mockTokenService.Setup(s => s.GetExistingToken(refreshToken, id))
                                 .Returns(existingToken);
             _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
                                 .Returns((string?)null!);
 
-            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            var result = await _userService.RefreshToken(refreshToken, clientId, ipAddress);
             Assert.Null(result);     
         }
 
         [Fact]
-        public void RefreshToken_GenerateRefreshTokenFailed_ReturnAuthResponseDTO()
+        public async Task RefreshToken_GenerateRefreshTokenFailed_ReturnAuthResponseDTO()
         {
             int id = 1;
             string name = "May Nicolaos";
@@ -1286,7 +1363,7 @@ namespace WebAPI.Tests.Services
             string jwtId = "test-jwt-id";
 
             _mockClientCacheService.Setup(s => s.GetClientByClientId(client.ClientId))
-                                .Returns(client);
+                                .ReturnsAsync(client);
             _mockTokenService.Setup(s => s.GetExistingToken(refreshToken, id))
                                 .Returns(existingToken);
             _mockTokenService.Setup(s => s.GenerateAccessToken(user, roles, out jwtId, client))
@@ -1294,7 +1371,7 @@ namespace WebAPI.Tests.Services
             _mockTokenService.Setup(s => s.GenerateRefreshToken(ipAddress, jwtId, client, user.Id))
                                 .Returns((RefreshToken?)null!);
             
-            var result = _userService.RefreshToken(refreshToken, clientId, ipAddress);
+            var result = await _userService.RefreshToken(refreshToken, clientId, ipAddress);
             Assert.Null(result);         
         }
     }

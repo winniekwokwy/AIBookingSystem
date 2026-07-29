@@ -41,11 +41,9 @@ public class BookingController : ControllerBase
     [HttpPost]
     public ActionResult<BookingDTO> BookRoom([FromBody] BookingCreateDTO bookingCreateDTO)
     {
-        if (bookingCreateDTO == null)
-        {
-            return BadRequest("Booking details are not provided.");
-        }
-        if (bookingCreateDTO.BookedBy == null || bookingCreateDTO.BookedBy == "")
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState); 
+        if (bookingCreateDTO.BookedBy == "")
         {
             return BadRequest("Name of the user for the booking is not provided.");
         }

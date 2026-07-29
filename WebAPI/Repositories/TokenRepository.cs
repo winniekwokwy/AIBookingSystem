@@ -23,32 +23,33 @@ namespace AIBookingSystem.Repositories
         public RefreshToken? GetExistingToken(string refreshToken, int clientId)
         {
             // Look up the refresh token in database, including related user and roles for new token generation
-            var existingToken = _dBContext.RefreshTokens
+            return _dBContext.RefreshTokens
                 .FirstOrDefault(rt => rt.Token == refreshToken && rt.ClientId == clientId);
-            // Validate refresh token existence, revocation status, and expiration
-            if (existingToken == null || existingToken.IsRevoked || existingToken.Expires <= DateTime.UtcNow)
-                return null; // Invalid refresh token
-            // Revoke old refresh token immediately to prevent reuse
-            existingToken.IsRevoked = true;
-            existingToken.RevokedAt = DateTime.UtcNow;
-            _dBContext.SaveChanges();
 
-            return existingToken;
         }
 
         public bool RevokeRefreshToken(string refreshToken)
         {
             // Look up the refresh token in the database
-            var existingToken = _dBContext.RefreshTokens.FirstOrDefault(rt => rt.Token == refreshToken);
+            var existingToken = GetExistingToken(refreshToken);
             // Return false if token not found or already revoked
             if (existingToken == null || existingToken.IsRevoked)
                 return false;
             // Mark token as revoked and record revocation time
-            existingToken.IsRevoked = true;
-            existingToken.RevokedAt = DateTime.UtcNow;
-            // Persist changes to database
-            _dBContext.SaveChanges();
+            RevokeToken(existingToken);
             return true; // Indicate successful revocation
+        }
+
+        public void RevokeToken(RefreshToken token)
+        {
+            token.IsRevoked = true;
+            token.RevokedAt = DateTime.UtcNow;
+            _dBContext.SaveChanges();
+        }
+
+        public RefreshToken? GetExistingToken(string refreshToken)
+        {
+            return _dBContext.RefreshTokens.FirstOrDefault(rt => rt.Token == refreshToken);
         }
     }
 }

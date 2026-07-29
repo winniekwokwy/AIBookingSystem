@@ -213,12 +213,12 @@ namespace WebAPI.Tests.Controllers
         [Fact]
         public void CreateRoom_NullRoomCreateDTO_ReturnBadRequest()
         {
-            var expected = "The RoomCreateDTO is null.";
+            _roomController.ModelState.AddModelError("RoomCreateDTO", "RoomCreateDTO is required.");
 
             var result = _roomController.CreateRoom((RoomCreateDTO) null!);
             var badRequstResult = result.Result as BadRequestObjectResult;
             Assert.IsType<BadRequestObjectResult>(badRequstResult);
-            Assert.Equal(expected, badRequstResult.Value);
+            Assert.False(_roomController.ModelState.IsValid);
         }
 
         [Fact]
@@ -315,7 +315,7 @@ namespace WebAPI.Tests.Controllers
         }
 
         [Fact]
-        public void CreateRoom_NullName_ReturnBadRequest()
+        public void CreateRoom_NameNull_ReturnBadRequest()
         {
             int id = 1;
             string name = null!;
@@ -327,7 +327,35 @@ namespace WebAPI.Tests.Controllers
             RoomId = id
             };
 
-            var expected = "Please provide a name of the room.";
+            var roomCreateDTO = new RoomCreateDTO
+                            {
+                                Name = name,
+                                Floor = floor,
+                                Capacity = capacity,
+                                Description = description,
+                            };
+            
+            roomCreateDTO.Equipments.Add(equipmentDTO);
+            _roomController.ModelState.AddModelError("Name", "The Name field is required.");
+
+            ActionResult<RoomDTO> result = _roomController.CreateRoom(roomCreateDTO);
+            BadRequestObjectResult? badRequstResult = result.Result as BadRequestObjectResult;
+            Assert.IsType<BadRequestObjectResult>(badRequstResult);
+            Assert.False(_roomController.ModelState.IsValid);
+        }
+
+        [Fact]
+        public void CreateRoom_DescriptionNull_ReturnBadRequest()
+        {
+            int id = 1;
+            string name = "Paris"!;
+            int floor = 5;
+            int capacity = 10;
+            string description = null!;
+            EquipmentDTO equipmentDTO = new EquipmentDTO{
+            Name = "Telephone",
+            RoomId = id
+            };
 
             var roomCreateDTO = new RoomCreateDTO
                             {
@@ -338,11 +366,12 @@ namespace WebAPI.Tests.Controllers
                             };
             
             roomCreateDTO.Equipments.Add(equipmentDTO);
+            _roomController.ModelState.AddModelError("Description", "The Description field is required.");
 
-            var result = _roomController.CreateRoom(roomCreateDTO);
-            var badRequstResult = result.Result as BadRequestObjectResult;
+            ActionResult<RoomDTO> result = _roomController.CreateRoom(roomCreateDTO);
+            BadRequestObjectResult? badRequstResult = result.Result as BadRequestObjectResult;
             Assert.IsType<BadRequestObjectResult>(badRequstResult);
-            Assert.Equal(expected, badRequstResult.Value);
+            Assert.False(_roomController.ModelState.IsValid);
         }
 
         [Fact]
@@ -353,37 +382,6 @@ namespace WebAPI.Tests.Controllers
             int floor = 5;
             int capacity = 10;
             string description = "";
-            EquipmentDTO equipmentDTO = new EquipmentDTO{
-            Name = "Telephone",
-            RoomId = id
-            };
-
-            var expected = "Please provide description of the room.";
-
-            var roomCreateDTO = new RoomCreateDTO
-                            {
-                                Name = name,
-                                Floor = floor,
-                                Capacity = capacity,
-                                Description = description,
-                            };
-            
-            roomCreateDTO.Equipments.Add(equipmentDTO);
-
-            var result = _roomController.CreateRoom(roomCreateDTO);
-            var badRequstResult = result.Result as BadRequestObjectResult;
-            Assert.IsType<BadRequestObjectResult>(badRequstResult);
-            Assert.Equal(expected, badRequstResult.Value);
-        }
-
-        [Fact]
-        public void CreateRoom_NullDescription_ReturnBadRequest()
-        {
-            int id = 1;
-            string name = "Paris";
-            int floor = 5;
-            int capacity = 10;
-            string description = null!;
             EquipmentDTO equipmentDTO = new EquipmentDTO{
             Name = "Telephone",
             RoomId = id
