@@ -5,6 +5,8 @@ using AIBookingSystem.Models;
 using NodaTime;
 using AIBookingSystem.Services;
 
+namespace AIBookingSystem.Helpers
+{
 public class DataSeeder
 {
     private readonly RoomBookingDbContext _context;
@@ -185,4 +187,5 @@ public class DataSeeder
             _context.SaveChanges();
         }
     }
+}
 }

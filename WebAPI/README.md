@@ -66,4 +66,12 @@ For unit tests, https://www.c-sharpcorner.com/article/unit-testing-for-a-net-web
 
 For exception and event in unit tests, https://hamidmosalla.com/2020/01/20/xunit-part-3-action-based-assertions-assert-raises-and-assert-throws/
 
-For integration tests, https://dev.to/imdj/unit-testing-aspnet-core-web-api-with-moq-and-xunit-controllers-services-nci
+For integration tests, https://dev.to/imdj/unit-testing-aspnet-core-web-api-with-moq-and-xunit-controllers-services-nci;
+https://medium.com/@dejandjenic/testing-with-jwt-in-net-apis-98c9587b9b33;
+https://blog.joaograssi.com/posts/2021/asp-net-core-testing-permission-protected-api-endpoints/;
+https://dotnettutorials.net/lesson/integration-testing-in-asp-net-core-web-api/
+
+10. Authenticatin and Authorization
+https://www.c-sharpcorner.com/article/complete-end-to-end-guide-https-hsts-and-tls-in-asp-net-core/;
+https://www.telerik.com/blogs/asp-net-core-basics-authentication-authorization-jwt;
+https://dotnettutorials.net/lesson/jwt-authentication-asp-net-core/
