@@ -1,7 +1,7 @@
 using AIBookingSystem.Data;
 using AIBookingSystem.Enums;
 using AIBookingSystem.Repositories;
-using AIBookingSystem.Helpers;
+using AIBookingSystem.DTO;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -17,15 +17,14 @@ namespace WebAPI.Tests.Repositories
                 .Options;
 
             var context = new RoomBookingDbContext(options);
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
+
             string password = "App13M@ng0";
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
+
             if (requiredData)
             {
                 context.Users.AddRange(
-                    new User(){ Id = 1, Name = "Apple Mango", UserName = "applemango", PasswordHash = passwordHash, PasswordSalt = passwordSalt, Role = UserRoles.Admin, Status = UserStatus.Active},
-                    new User() { Id = 2, Name = "Ben Smith", UserName = "bensmith", PasswordHash = passwordHash, PasswordSalt = passwordSalt, Role = UserRoles.User, Status = UserStatus.Active}
+                    new User(){ Id = 1, Name = "Apple Mango", UserName = "applemango", PasswordHash = BCrypt.Net.BCrypt.HashPassword(password), Role = UserRoles.Admin, Status = UserStatus.Active},
+                    new User() { Id = 2, Name = "Ben Smith", UserName = "bensmith", PasswordHash = BCrypt.Net.BCrypt.HashPassword(password), Role = UserRoles.User, Status = UserStatus.Active}
                 );
 
                 context.SaveChanges();
@@ -226,16 +225,11 @@ namespace WebAPI.Tests.Repositories
             UserRoles role = UserRoles.User;
             UserStatus status = UserStatus.Active;
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             var user = new User
             {
                 Name = name,
                 UserName = username,
-                PasswordHash = passwordHash,
-                PasswordSalt = passwordSalt,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                 Role = role,
                 Status = status
             };
@@ -274,16 +268,11 @@ namespace WebAPI.Tests.Repositories
             UserRoles role = UserRoles.User;
             UserStatus status = UserStatus.Active;
 
-            byte[] passwordHash = [];
-            byte[] passwordSalt = [];
-            PasswordHandler.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-
             var user = new User
             {
                 Name = name,
                 UserName = username,
-                PasswordHash = passwordHash,
-                PasswordSalt = passwordSalt,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                 Role = role,
                 Status = status
             };
@@ -378,6 +367,6 @@ namespace WebAPI.Tests.Repositories
 
             Assert.NotNull(users);
             Assert.Empty(users);
-        }    
+        }
     }
 }

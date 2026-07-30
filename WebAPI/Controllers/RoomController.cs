@@ -2,12 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Services;
 using NodaTime;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AIBookingSystem.Controllers
 {
 
     [ApiController]
     [Route("api/[controller]/[action]")]
+    [Authorize]
     public class RoomController : ControllerBase
     {
         private readonly IRoomService _roomService;
@@ -56,52 +58,50 @@ namespace AIBookingSystem.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public ActionResult<RoomDTO> CreateRoom([FromBody] RoomCreateDTO createDto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState); 
+            
             string message="";
-            if (createDto != null)
+
+            if (createDto.Floor < 0)
             {
-                if (createDto.Floor < 0)
+                message = "Please provide a valid location/floor.";
+            }
+            else
+            {
+                if (createDto.Capacity <= 0)
                 {
-                    message = "Please provide a valid location/floor.";
+                    message = "Capacity must be bigger than 0.";
                 }
-                else
+                else 
                 {
-                    if (createDto.Capacity <= 0)
-                    {
-                        message = "Capacity must be bigger than 0.";
+                    if (createDto.Name == ""){
+                        message = "Please provide a name of the room.";
                     }
                     else 
                     {
-                        if (createDto.Name == null || createDto.Name == ""){
-                            message = "Please provide a name of the room.";
-                        }
-                        else 
+                        if (createDto.Description == "")
                         {
-                            if (createDto.Description == null || createDto.Description == "")
+                            message = "Please provide description of the room.";
+                        }
+                        else
+                        {
+                            var newRoom = _roomService.CreateRoom(createDto);
+                            if (newRoom == null)
                             {
-                                message = "Please provide description of the room.";
+                                message = "Room is not created successfully.";
                             }
-                            else
-                            {
-                                var newRoom = _roomService.CreateRoom(createDto);
-                                if (newRoom == null)
-                                {
-                                    message = "Room is not created successfully.";
-                                }
-                                else {
+                            else {
 
-                                    return CreatedAtAction(nameof(GetRoombyID), new { id = newRoom.Id }, newRoom);   
-                                    
-                                }
+                                return CreatedAtAction(nameof(GetRoombyID), new { id = newRoom.Id }, newRoom);   
+                                
                             }
                         }
                     }
                 }
-            }
-            else 
-            {
-                message = "The RoomCreateDTO is null.";
             }
             _logger.LogError(message);        
             return BadRequest (message);

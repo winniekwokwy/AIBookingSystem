@@ -1,6 +1,6 @@
+using System.Net;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Enums;
-using AIBookingSystem.Helpers;
 using AIBookingSystem.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +9,19 @@ namespace AIBookingSystem.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepo;
-        public UserService(IUserRepository userRepo)
+
+        private readonly ITokenService _tokenService;
+
+        private readonly IClientCacheService _clientCacheService;
+
+        private readonly IConfiguration _configuration;
+
+        public UserService(IUserRepository userRepo, ITokenService tokenService, IClientCacheService clientCacheService, IConfiguration configuration)
         {
             _userRepo = userRepo;
+            _tokenService = tokenService;
+            _clientCacheService = clientCacheService;
+            _configuration = configuration;
         }
 
         public bool IsRoleValid(string role)
@@ -154,18 +164,12 @@ namespace AIBookingSystem.Services
                     var username = user.UserName.ToLower();
                     if (!_userRepo.UsernameInUse(username))
                     {
-                        byte[] passwordHash =[];
-                        byte[] passwordSalt = [];
-
-                        PasswordHandler.CreatePasswordHash(user.Password, out passwordHash, out passwordSalt);
-
                         var newUser = new User
                                         {
                                             Name = user.Name,
                                             UserName = username,
                                             Role = RoleMappingString2Enum(user.Role),
-                                            PasswordHash = passwordHash,
-                                            PasswordSalt = passwordSalt,
+                                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password),
                                             Status = StatusMappingString2Enum(user.Status)
                                         };
                 
@@ -199,6 +203,111 @@ namespace AIBookingSystem.Services
                 return false;
             }
             return true;
+        }
+
+        public async Task<AuthResponseDTO?> AuthenticateUser(UserLoginDTO loginDto, string ipAddress)
+        {
+            if ((loginDto == null) || (ipAddress == null) || (ipAddress == ""))
+                return null;
+
+            if (!IPAddress.TryParse(ipAddress, out _))
+                return null;
+
+            // Retrieve user by email with roles eagerly loaded; only active users allowed
+            var user = _userRepo.GetUserbyUsername(loginDto.UserName);
+            // Verify user exists and password matches the stored hashed password
+            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+            {
+               return null; // Invalid credentials
+            }
+
+            // Extract list of role names for inclusion in JWT claims
+            List<string> roles = Enum.GetNames(typeof(UserRoles)).ToList();
+            // Retrieve client info by ClientId
+            var client = await _clientCacheService.GetClientByClientId(loginDto.ClientId);
+            if (client == null)
+            {
+                // Fail if client does not exist or is inactive
+                return null;
+            }
+            // Generate JWT access token with user details, roles, and client info
+            var accessToken = _tokenService.GenerateAccessToken(user, roles, out string jwtId, client);
+            if (accessToken == null || accessToken =="")
+                return null;
+            // Generate refresh token linked to the generated JWT ID, client, user, and IP address
+            var refreshToken = _tokenService.GenerateRefreshToken(ipAddress, jwtId, client, user.Id);
+            if (refreshToken == null)
+                return null;
+            // Store the refresh token in the database for later validation and refresh workflows
+            _tokenService.AddRefreshTokens(refreshToken);
+
+            // Read access token expiration duration from config or fallback to 15 minutes
+            var accessTokenExpiryMinutes = int.TryParse(_configuration["JwtSettings:AccessTokenExpirationMinutes"], out var val) ? val : 15;
+            // Return the tokens and expiry info encapsulated in AuthResponseDTO
+            return new AuthResponseDTO
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken.Token,
+                AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(accessTokenExpiryMinutes)
+            };
+        }
+
+        // Refreshes an expired access token using a valid refresh token and client ID
+        public async Task<AuthResponseDTO?> RefreshToken(string refreshToken, string clientId, string ipAddress)
+        {
+            if (refreshToken == null || refreshToken == "" || clientId == null || clientId == "" || ipAddress == null || ipAddress == "")
+                return null;
+            // Retrieve client info by clientId for validation
+            var client =  await _clientCacheService.GetClientByClientId(clientId);
+            if (client == null)
+            {
+                // Client invalid or inactive; reject refresh
+                return null;
+            }
+            // Look up the refresh token in database, including related user and roles for new token generation
+        
+            var existingToken = _tokenService.GetExistingToken(refreshToken, client.Id);
+            
+            // Validate refresh token existence, revocation status, and expiration
+            if (existingToken == null || existingToken.IsRevoked || existingToken.Expires <= DateTime.UtcNow)
+                return null; // Invalid refresh token
+            // Revoke old refresh token immediately to prevent reuse
+            _tokenService.RevokeToken(existingToken);
+
+            var user = existingToken.User;
+            if (user == null)
+                return null;
+            var roles = Enum.GetNames(typeof(UserRoles)).ToList();
+            // Generate a new access token with fresh JWT ID and client info
+            var accessToken = _tokenService.GenerateAccessToken(user, roles, out string newJwtId, client);
+            if (accessToken == null || accessToken == "")
+                return null;
+            // Generate a new refresh token linked to the new JWT ID
+            var newRefreshToken = _tokenService.GenerateRefreshToken(ipAddress, newJwtId, client, user.Id);
+            if (newRefreshToken == null)
+                return null;
+            // Store the new refresh token in the database
+            _tokenService.AddRefreshTokens(newRefreshToken);
+            // Read access token expiration duration from config or default to 15 minutes
+            var accessTokenExpiryMinutes = int.TryParse(_configuration["JwtSettings:AccessTokenExpirationMinutes"], out var val) ? val : 15;
+            // Return the new tokens and expiry info
+            return new AuthResponseDTO
+            {
+                AccessToken = accessToken,
+                RefreshToken = newRefreshToken.Token,
+                AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(accessTokenExpiryMinutes)
+            };
+        }
+        // Revokes an existing refresh token to prevent further use
+        public bool RevokeRefreshToken(string refreshToken)
+        {
+            var existingToken = _tokenService.GetExistingToken(refreshToken);
+            // Return false if token not found or already revoked
+            if (existingToken == null || existingToken.IsRevoked)
+                return false;
+            // Mark token as revoked and record revocation time
+            _tokenService.RevokeToken(existingToken);
+            return true; // Indicate successful revocation
         }
     }
 }
