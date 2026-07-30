@@ -1,3 +1,5 @@
+using AIBookingSystem.DTO;
+
 namespace AIBookingSystem.Repositories
 {
     public interface IUserRepository

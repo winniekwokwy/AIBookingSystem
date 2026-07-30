@@ -4,7 +4,6 @@ using AIBookingSystem.Data;
 using AIBookingSystem.Models;
 using NodaTime;
 using AIBookingSystem.Services;
-using AIBookingSystem.Helpers;
 
 public class DataSeeder
 {
@@ -23,15 +22,12 @@ public class DataSeeder
             .RuleFor(u => u.Role, f => typeOfUser)
             .RuleFor(u => u.Status, f => UserStatus.Active);
 
-        byte[] passwordHash = [];
-        byte[] passwordSalt = [];
-        PasswordHandler.CreatePasswordHash("@bcd3fgh", out passwordHash, out passwordSalt);
+        string password = "@bcd3fgH";
         var users = userFaker.Generate(noOfUsers);
 
         foreach (var user in users)
         {
-            user.PasswordHash = passwordHash;
-            user.PasswordSalt = passwordSalt;
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
         }
 
         _context.AddRange(users);
@@ -63,6 +59,11 @@ public class DataSeeder
                 int count = 1;
                 foreach (var room in rooms) 
                 {
+                    int noOfName = rooms.Count(r => r.Name == room.Name);
+                    if (noOfName >1)
+                    {
+                        room.Name = room.Name+count.ToString();
+                    }
                     room.Description = $"This room is located at {room.Floor}/F which can accomodate {room.Capacity} people.";
                     room.Equipments = new List<Equipment>();
                     room.Equipments.Add(new Equipment()
@@ -154,6 +155,34 @@ public class DataSeeder
                  _context.AddRange(bookings);
                 _context.SaveChanges();
             }
+        }
+    }
+
+    public void seedClients()
+    {
+        if (!_context.Clients.Any())
+        {
+            Client client1 = new Client()
+                            {
+                                Id = 1,
+                                ClientId = "client-app-one", // Unique client identifier used in JWT tokens
+                                Name = "Demo Client Application One",
+                                ClientSecret = "fPXxcJw8TW5sA+S4rl4tIPcKk+oXAqoRBo+1s2yjUS4=", // Base64-encoded secret key
+                                ClientURL = "https://clientappone.example.com", // Used as Audience in JWT validation
+                                IsActive = true // Active client flag
+                            };
+            Client client2 = new Client()
+                            {
+                                Id = 2,
+                                ClientId = "client-app-two",
+                                Name = "Demo Client Application Two",
+                                ClientSecret = "UkY2JEdtWqKFY5cEUuWqKZut2o6BI5cf3oexOlCMZvQ=",
+                                ClientURL = "https://clientapptwo.example.com",
+                                IsActive = true
+                            };
+            _context.Add(client1);
+            _context.Add(client2);
+            _context.SaveChanges();
         }
     }
 }

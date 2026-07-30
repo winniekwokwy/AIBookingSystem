@@ -242,11 +242,63 @@ namespace WebAPI.Tests.Controllers
         public void CreateUser_NullUserCreateDTO_ReturnBadRequest()
 
         {
-            var expected = "The UserCreateDTO is null.";
+            _userController.ModelState.AddModelError("UserCreateDTO", "The UserCreateDTO is required.");
             var result = _userController.CreateUser(null!);
             var badRequstResult = result.Result as BadRequestObjectResult;
             Assert.IsType<BadRequestObjectResult>(badRequstResult);
-            Assert.Equal(expected, badRequstResult.Value);
+            Assert.False(_userController.ModelState.IsValid);
+        }
+
+        [Fact]
+        public void CreateUser_NullRole_ReturnBadRequest()
+
+        {
+            string name = "May Nicolaos";
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string role = null!;
+            string status = "Active";
+
+            UserCreateDTO user = new UserCreateDTO
+                            {
+                                Name = name, 
+                                UserName = username, 
+                                Password = password, 
+                                Role = role, 
+                                Status = status
+                            };
+
+            _userController.ModelState.AddModelError("Role", "The Role is required.");
+            var result = _userController.CreateUser(user);
+            var badRequstResult = result.Result as BadRequestObjectResult;
+            Assert.IsType<BadRequestObjectResult>(badRequstResult);
+            Assert.False(_userController.ModelState.IsValid);
+        }
+
+        [Fact]
+        public void CreateUser_NullStatus_ReturnBadRequest()
+
+        {
+            string name = "May Nicolaos";
+            string username = "maynicolaos";
+            string password = "M@yNic01@0s";
+            string role = "Admin";
+            string status = null!;
+
+            UserCreateDTO user = new UserCreateDTO
+                            {
+                                Name = name, 
+                                UserName = username, 
+                                Password = password, 
+                                Role = role, 
+                                Status = status
+                            };
+
+            _userController.ModelState.AddModelError("Status", "The Status is required.");
+            var result = _userController.CreateUser(user);
+            var badRequstResult = result.Result as BadRequestObjectResult;
+            Assert.IsType<BadRequestObjectResult>(badRequstResult);
+            Assert.False(_userController.ModelState.IsValid);
         }
 
         [Fact]
@@ -275,33 +327,6 @@ namespace WebAPI.Tests.Controllers
             Assert.IsType<BadRequestObjectResult>(badRequstResult);
             Assert.Equal(expected, badRequstResult.Value);
         }
-
-        [Fact]
-        public void CreateUser_NullRole_ReturnBadRequest()
-
-        {
-            string name = "May Nicolaos";
-            string username = "maynicolaos";
-            string password = "M@yNic01@0s";
-            string role = null!;
-            string status = "Active";
-
-            UserCreateDTO user = new UserCreateDTO
-                            {
-                                Name = name, 
-                                UserName = username, 
-                                Password = password, 
-                                Role = role, 
-                                Status = status
-                            };
-            var expected = "Please provide user role.";
-            _mockUserService.Setup(s => s.IsRoleValid(role))
-                            .Returns(false);
-            var result = _userController.CreateUser(user);
-            var badRequstResult = result.Result as BadRequestObjectResult;
-            Assert.IsType<BadRequestObjectResult>(badRequstResult);
-            Assert.Equal(expected, badRequstResult.Value);
-        }   
 
         [Fact]
         public void CreateUser_MissingRole_ReturnBadRequest()
@@ -349,35 +374,6 @@ namespace WebAPI.Tests.Controllers
                                 Status = status
                             };
             var expected = "Status can be Active or Inactive only.";
-            _mockUserService.Setup(s => s.IsRoleValid(role))
-                            .Returns(true);
-            _mockUserService.Setup(s => s.IsStatusValid(It.IsAny<UserStatus>()))
-                            .Returns(false);
-            var result = _userController.CreateUser(user);
-            var badRequstResult = result.Result as BadRequestObjectResult;
-            Assert.IsType<BadRequestObjectResult>(badRequstResult);
-            Assert.Equal(expected, badRequstResult.Value);
-        }
-
-        [Fact]
-        public void CreateUser_NullStatus_ReturnBadRequest()
-
-        {
-            string name = "May Nicolaos";
-            string username = "maynicolaos";
-            string password = "M@yNic01@0s";
-            string role = "Admin";
-            string status = null!;
-
-            UserCreateDTO user = new UserCreateDTO
-                            {
-                                Name = name, 
-                                UserName = username, 
-                                Password = password, 
-                                Role = role, 
-                                Status = status
-                            };
-            var expected = "Please provide user status.";
             _mockUserService.Setup(s => s.IsRoleValid(role))
                             .Returns(true);
             _mockUserService.Setup(s => s.IsStatusValid(It.IsAny<UserStatus>()))

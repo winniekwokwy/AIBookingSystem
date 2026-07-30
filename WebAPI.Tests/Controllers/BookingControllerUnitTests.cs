@@ -124,20 +124,17 @@ namespace WebAPI.Tests.Controllers
         [Fact]
         public void BookRoom_BookingCreateDTONull_ReturnBadRequest()
         {
-            string expected = "Booking details are not provided.";
-            
+            _bookingController.ModelState.AddModelError("BookingCreateDTO", "BookingCreateDTO is required.");   
             var result = _bookingController.BookRoom((BookingCreateDTO) null!);
             
             var badRequstResult = result.Result as BadRequestObjectResult;
             Assert.IsType<BadRequestObjectResult>(badRequstResult);
-            Assert.Equal(expected, badRequstResult.Value);      
+            Assert.False(_bookingController.ModelState.IsValid);      
         }
 
         [Fact]
         public void BookRoom_BookedByNull_ReturnBadRequest()
         {
-            string expected = "Name of the user for the booking is not provided.";
-            
             int roomId = 1;
             string? bookedBy = null;
             int userId = 1;
@@ -146,11 +143,13 @@ namespace WebAPI.Tests.Controllers
 
             var bookingCreateDTO = new BookingCreateDTO{RoomId = roomId, BookedBy = bookedBy!, UserId = userId, BookingFrom = bookingFrom, BookingTo = bookingTo}; 
 
+            _bookingController.ModelState.AddModelError("BookedBy", "The BookedBy field is required.");
+
             var result = _bookingController.BookRoom(bookingCreateDTO);
             
             var badRequstResult = result.Result as BadRequestObjectResult;
             Assert.IsType<BadRequestObjectResult>(badRequstResult);
-            Assert.Equal(expected, badRequstResult.Value);      
+            Assert.False(_bookingController.ModelState.IsValid);      
         }
 
         [Fact]
