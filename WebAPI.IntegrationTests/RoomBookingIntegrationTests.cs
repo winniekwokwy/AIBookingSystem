@@ -1,5 +1,14 @@
-﻿using System.Net.Http.Json;  
-using AIBookingSystem.DTOs;  
+﻿using System.Net.Http.Json;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Logging;
+
+using AIBookingSystem.DTO;  
+using AIBookingSystem.Controllers;
+using System.Reflection.Metadata;
+using System.Net;
 namespace AIBookingSystem.IntegrationTests
 {
     // Integration test class for testing the Orders API endpoints.
@@ -7,64 +16,127 @@ namespace AIBookingSystem.IntegrationTests
     public class RoomBookingIntegrationTests : IClassFixture<CustomWebApplicationFactory>
     {
         private readonly HttpClient _client;  // HttpClient instance used to send HTTP requests to the in-memory API
+        private readonly ITestOutputHelper _output;
+
+        private readonly InMemoryLoggerProvider _logger;
         // Constructor receives the factory instance from xUnit via IClassFixture
         // Factory creates the in-memory test server and HttpClient
-        public OrderIntegrationTests(CustomWebApplicationFactory factory)
+        public RoomBookingIntegrationTests(CustomWebApplicationFactory factory, ITestOutputHelper output)
         {
             // Creates an HttpClient configured to communicate with the test server
-            _client = factory.CreateClient(); 
-        }
-        // Test case to verify that creating an order with valid data returns success and expected response
-        [Fact]
-        public async Task CreateOrder_ValidRequest_ReturnsSuccess()
-        {
-            // Arrange: Prepare a valid OrderCreateDTO with a known CustomerId and a list of order items
-            var orderDto = new OrderCreateDTO
+            _client = factory.CreateClient(new WebApplicationFactoryClientOptions
             {
-                CustomerId = 1,  // Assumes this customer exists in seeded test data
-                Items = new List<OrderItemDTO>
-                {
-                    new OrderItemDTO { ProductId = 1, Quantity = 2 }  // Order 2 units of ProductId 1
-                }
-            };
-            // Act: Send a POST request to the /api/orders endpoint with the orderDto serialized as JSON
-            var response = await _client.PostAsJsonAsync("/api/orders", orderDto);
-            // Assert: Verify the response indicates a successful HTTP status code (200-299)
-            response.EnsureSuccessStatusCode();
-            // Deserialize the JSON response content into an OrderResponseDTO object
-            var result = await response.Content.ReadFromJsonAsync<OrderResponseDTO>();
-            // Assert: Validate the response DTO is not null and contains the expected CustomerId
-            Assert.NotNull(result);
-            Assert.Equal(orderDto.CustomerId, result.CustomerId);
+                AllowAutoRedirect = false,
+                BaseAddress = new Uri("https://localhost:7287") // Adjust the port as needed
+            }); 
+            _output = output;
+            _logger = factory.LoggerProvider;
         }
-        // Test case to verify fetching an existing order returns the expected order details
+
         [Fact]
-        public async Task GetOrder_ExistingOrder_ReturnsSuccess()
+        public async Task Login_ValidLoginCredential_ReturnOK()
         {
-            // Arrange: First, create an order explicitly to ensure there is an order to fetch later
-            var orderDto = new OrderCreateDTO
+            var userLoginRequest = new UserLoginDTO
             {
-                CustomerId = 1,  // Use the seeded test customer
-                Items = new List<OrderItemDTO>
-                {
-                    new OrderItemDTO { ProductId = 1, Quantity = 2 }
-                }
+                UserName = "applemango",
+                Password = "App13M@ng0",
+                ClientId = "client-app-one"
             };
-            // Send POST request to create the order and ensure success
-            var createResponse = await _client.PostAsJsonAsync("/api/orders", orderDto);
-            createResponse.EnsureSuccessStatusCode();
-            // Deserialize the created order response to get the assigned OrderId
-            var createdOrder = await createResponse.Content.ReadFromJsonAsync<OrderResponseDTO>();
-            var orderId = createdOrder?.OrderId;  // Safely extract OrderId for the next request
-            // Act: Send a GET request to fetch the order by its OrderId
-            var response = await _client.GetAsync($"/api/orders/{orderId}");
-            // Assert: Confirm the GET request succeeded
-            response.EnsureSuccessStatusCode();
-            // Deserialize the order details from the response
-            var result = await response.Content.ReadFromJsonAsync<OrderResponseDTO>();
-            // Assert: Validate the response is not null and the returned OrderId matches the requested one
-            Assert.NotNull(result);
-            Assert.Equal(orderId, result.OrderId);
+
+            var jsonContent = JsonSerializer.Serialize(userLoginRequest);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            var response = await _client.PostAsync("/api/Auth/login", content, TestContext.Current.CancellationToken);
+
+            var responseBody = await response.Content.ReadAsStringAsync(
+                TestContext.Current.CancellationToken);
+
+            _output.WriteLine($"StatusCode: {(int)response.StatusCode} ({response.StatusCode})");
+            _output.WriteLine($"ReasonPhrase: {response.ReasonPhrase}");
+            _output.WriteLine($"ResponseBody: {responseBody}");
+            _output.WriteLine($"RequestMessage: {response.RequestMessage}");
+
+            foreach (var entry in _logger.Entries)
+            {
+                _output.WriteLine(
+                    $"{entry.Level} | {entry.Category} | {entry.Message}");
+            }
+
+            Assert.True(
+                response.IsSuccessStatusCode,
+                $"Login failed with {(int)response.StatusCode}: {responseBody}");
+                
+            var userLoginResponse = await response.Content.ReadFromJsonAsync<AuthResponseDTO>(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);                
+        }
+
+        [Fact]
+        public async Task Login_InvalidLoginCredential_ReturnUnauthorized()
+        {
+            var userLoginRequest = new UserLoginDTO
+            {
+                UserName = "applemango",
+                Password = "App13M@ng0!",
+                ClientId = "client-app-one"
+            };
+
+            var jsonContent = JsonSerializer.Serialize(userLoginRequest);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            var response = await _client.PostAsync("/api/Auth/login", content, TestContext.Current.CancellationToken);
+
+            var responseBody = await response.Content.ReadAsStringAsync(
+                TestContext.Current.CancellationToken);
+
+            _output.WriteLine($"StatusCode: {(int)response.StatusCode} ({response.StatusCode})");
+            _output.WriteLine($"ReasonPhrase: {response.ReasonPhrase}");
+            _output.WriteLine($"ResponseBody: {responseBody}");
+            _output.WriteLine($"RequestMessage: {response.RequestMessage}");
+
+            foreach (var entry in _logger.Entries)
+            {
+                _output.WriteLine(
+                    $"{entry.Level} | {entry.Category} | {entry.Message}");
+            }
+
+            Assert.False(
+                response.IsSuccessStatusCode,
+                $"Login failed with {(int)response.StatusCode}: {responseBody}");
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+                [Fact]
+        public async Task Login_InvalidInput_ReturnBadRequest()
+        {
+            var userLoginRequest = new UserLoginDTO
+            {
+                UserName = "applemango",
+                Password = "App13M@ng0!",
+                ClientId = null!
+            };
+
+            var jsonContent = JsonSerializer.Serialize(userLoginRequest);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            var response = await _client.PostAsync("/api/Auth/login", content, TestContext.Current.CancellationToken);
+
+            var responseBody = await response.Content.ReadAsStringAsync(
+                TestContext.Current.CancellationToken);
+
+            _output.WriteLine($"StatusCode: {(int)response.StatusCode} ({response.StatusCode})");
+            _output.WriteLine($"ReasonPhrase: {response.ReasonPhrase}");
+            _output.WriteLine($"ResponseBody: {responseBody}");
+            _output.WriteLine($"RequestMessage: {response.RequestMessage}");
+
+            foreach (var entry in _logger.Entries)
+            {
+                _output.WriteLine(
+                    $"{entry.Level} | {entry.Category} | {entry.Message}");
+            }
+
+            Assert.False(
+                response.IsSuccessStatusCode,
+                $"Login failed with {(int)response.StatusCode}: {responseBody}");
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
     }
 }

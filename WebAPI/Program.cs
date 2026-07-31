@@ -4,6 +4,7 @@ using AIBookingSystem.Data;
 using AIBookingSystem.Models;
 using AIBookingSystem.Helpers;
 
+using System.Net;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +12,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 // Add services to the container.
 
@@ -23,7 +27,8 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<RoomBookingDbContext>(options =>
-    options.UseNpgsql(builder.Configuration["dBConnectionString"], o => o.UseNodaTime()));
+    options.UseNpgsql(builder.Configuration["dBConnectionString"]));
+    //options.UseNpgsql(builder.Configuration["dBConnectionString"], o => o.UseNodaTime()));
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoomService, RoomService>();
@@ -136,6 +141,17 @@ clientCacheInstance = new Lazy<IClientCacheService>(() =>
             seeder.seedClients();
         }
     }
+
+if (app.Environment.IsEnvironment("Test"))
+{
+    app.Use(async (context, next) =>
+    {
+        context.Connection.RemoteIpAddress =
+            IPAddress.Parse("203.0.113.10");
+
+        await next();
+    });
+}
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

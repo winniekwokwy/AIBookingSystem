@@ -17,11 +17,14 @@ namespace WebAPI.Tests.Controllers
     public class AuthControllerUnitTests
     {
         private readonly Mock<IUserService> _mockUserService;
+
+        private readonly Mock<ILogger<AuthController>> _mockLogger;
         private readonly IConfiguration _configuration;
 
         public AuthControllerUnitTests()
         {
             _mockUserService = new Mock<IUserService>();
+            _mockLogger = new Mock<ILogger<AuthController>>();
             _configuration = new ConfigurationBuilder()
                         .AddInMemoryCollection(new Dictionary<string, string?>
                         {
@@ -32,7 +35,7 @@ namespace WebAPI.Tests.Controllers
 
         private AuthController CreateController(string remoteIp = "127.0.0.1")
         {
-            var controller = new AuthController(_mockUserService.Object)
+            var controller = new AuthController(_mockUserService.Object, _mockLogger.Object)
             {
                 ControllerContext = new ControllerContext
                 {

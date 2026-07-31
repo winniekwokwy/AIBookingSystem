@@ -1,7 +1,11 @@
+using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
+
 using AIBookingSystem;
 using AIBookingSystem.Data;
 
@@ -11,9 +15,39 @@ namespace AIBookingSystem.IntegrationTests
     // Inheriting from WebApplicationFactory<Program> allows overriding the startup configuration for tests.
     public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
+        public InMemoryLoggerProvider LoggerProvider { get; } = new();
         // Override ConfigureWebHost to customize the test server's service registrations.
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+
+            builder.ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddProvider(LoggerProvider);
+                logging.SetMinimumLevel(LogLevel.Debug);
+            });
+
+            // Keep this if your provider must be resolvable from DI
+            builder.ConfigureServices(services =>
+            {
+                services.AddSingleton(LoggerProvider);
+            });
+
+            // builder.Configure(app =>
+            // {
+            //     app.Use((RequestDelegate next) =>
+            //     {
+            //         return async context =>
+            //         {
+            //             context.Connection.RemoteIpAddress =
+            //                 IPAddress.Parse("203.0.113.10");
+
+            //             await next(context);
+            //         };
+            //     });
+            // });
+
+            builder.UseEnvironment("Test");
             // ConfigureServices is used to modify the Dependency Injection (DI) container.
             builder.ConfigureServices(services =>
             {
@@ -35,7 +69,7 @@ namespace AIBookingSystem.IntegrationTests
                 // Register ApplicationDbContext with the InMemory database provider.
                 // The database is named "IntegrationTestDb" to create a shared in-memory database instance.
                 // Using UseInternalServiceProvider ensures all DbContext instances share the same internal EF services and in-memory store.
-                services.AddDbContext<ApplicationDbContext>(options =>
+                services.AddDbContext<RoomBookingDbContext>(options =>
                 {
                     options.UseInMemoryDatabase("IntegrationTestDb");
                     options.UseInternalServiceProvider(serviceProvider);
