@@ -68,8 +68,10 @@ For exception and event in unit tests, https://hamidmosalla.com/2020/01/20/xunit
 
 For integration tests, 
 https://dotnettutorials.net/lesson/integration-testing-in-asp-net-core-web-api/
+https://medium.com/c-sharp-programming/token-authentication-asp-net-1e7fdfb838bb
 https://medium.com/@disa2aka/token-authentication-integration-testing-asp-net-1ff49b728faf
 https://medium.com/@dejandjenic/testing-with-jwt-in-net-apis-98c9587b9b33
+https://medium.com/codex/integration-testing-in-aspnetcore-5e946def188f
 
 10. Authenticatin and Authorization
 https://www.c-sharpcorner.com/article/complete-end-to-end-guide-https-hsts-and-tls-in-asp-net-core/;

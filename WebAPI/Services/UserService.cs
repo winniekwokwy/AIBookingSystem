@@ -16,12 +16,15 @@ namespace AIBookingSystem.Services
 
         private readonly IConfiguration _configuration;
 
-        public UserService(IUserRepository userRepo, ITokenService tokenService, IClientCacheService clientCacheService, IConfiguration configuration)
+        private readonly ILogger<UserService> _logger;
+
+        public UserService(IUserRepository userRepo, ITokenService tokenService, IClientCacheService clientCacheService, IConfiguration configuration, ILogger<UserService> logger)
         {
             _userRepo = userRepo;
             _tokenService = tokenService;
             _clientCacheService = clientCacheService;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public bool IsRoleValid(string role)
@@ -158,31 +161,41 @@ namespace AIBookingSystem.Services
 
         public UserDTO? CreateUser(UserCreateDTO user)
         {
-            if (user != null){
-                if (user.UserName != null)
-                {
-                    var username = user.UserName.ToLower();
-                    if (!_userRepo.UsernameInUse(username))
-                    {
-                        var newUser = new User
-                                        {
-                                            Name = user.Name,
-                                            UserName = username,
-                                            Role = RoleMappingString2Enum(user.Role),
-                                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password),
-                                            Status = StatusMappingString2Enum(user.Status)
-                                        };
-                
-                        var addedUser = _userRepo.CreateUser(newUser);
-
-                        if (addedUser != null)
-                        {
-                            return MapUser2DTO(addedUser);
-                        }
-                    }
-                }
+            _logger.LogInformation("Debug | UserService | CreateUser | reached.");
+            if (user == null){
+                _logger.LogInformation("Debug | UserService | CreateUser | User is null.");
+                return null;
             }
-            return null;
+
+            if (user.UserName == null)
+            {
+                _logger.LogInformation("Debug | UserService | CreateUser | Username is null.");
+                return null;
+            }
+
+            var username = user.UserName.ToLower();
+            if (_userRepo.UsernameInUse(username))
+            {
+                _logger.LogInformation("Debug | UserService | CreateUser | Username is in use.");
+                return null;
+            }
+            var newUser = new User
+                            {
+                                Name = user.Name,
+                                UserName = username,
+                                Role = RoleMappingString2Enum(user.Role),
+                                PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password),
+                                Status = StatusMappingString2Enum(user.Status)
+                            };
+    
+            var addedUser = _userRepo.CreateUser(newUser);
+
+            if (addedUser == null)
+            {
+                _logger.LogInformation("Debug | UserService | CreateUser | User created unsuccessfully.");
+                return null;
+            }
+            return MapUser2DTO(addedUser);
         }
 
         public bool IsUserValid(int id, string username)
@@ -216,13 +229,16 @@ namespace AIBookingSystem.Services
             // Retrieve user by email with roles eagerly loaded; only active users allowed
             var user = _userRepo.GetUserbyUsername(loginDto.UserName);
             // Verify user exists and password matches the stored hashed password
+            // _logger.LogInformation($"[User Service | Authentiate user: user is {user?.UserName}]");
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
                return null; // Invalid credentials
             }
 
-            // Extract list of role names for inclusion in JWT claims
-            List<string> roles = Enum.GetNames(typeof(UserRoles)).ToList();
+            // Extract the authenticated user's role name for inclusion in JWT claims
+            var userRoleName = RoleMappingEnum2String(user.Role);
+            List<string> roles = new List<string>();
+            if (!string.IsNullOrEmpty(userRoleName)) roles.Add(userRoleName);
             // Retrieve client info by ClientId
             var client = await _clientCacheService.GetClientByClientId(loginDto.ClientId);
             if (client == null)
@@ -253,39 +269,59 @@ namespace AIBookingSystem.Services
         }
 
         // Refreshes an expired access token using a valid refresh token and client ID
-        public async Task<AuthResponseDTO?> RefreshToken(string refreshToken, string clientId, string ipAddress)
+        public async Task<AuthResponseDTO?> RefreshToken(RefreshTokenRequestDTO refreshTokenRequestDTO, string ipAddress)
         {
-            if (refreshToken == null || refreshToken == "" || clientId == null || clientId == "" || ipAddress == null || ipAddress == "")
+            _logger.LogInformation("[User Service | Refresh Token: reached.]");
+            if (refreshTokenRequestDTO.RefreshToken == null || refreshTokenRequestDTO.RefreshToken == "" || refreshTokenRequestDTO.ClientId == null || refreshTokenRequestDTO.ClientId == "" || ipAddress == null || ipAddress == "")
+            {
+                _logger.LogInformation("[User Service | Refresh Token: refreshToken or ClientId or ipAddress is null or empty.]");
                 return null;
+            }
             // Retrieve client info by clientId for validation
-            var client =  await _clientCacheService.GetClientByClientId(clientId);
+            var client =  await _clientCacheService.GetClientByClientId(refreshTokenRequestDTO.ClientId);
             if (client == null)
             {
+                _logger.LogInformation($"[User Service | Refresh Token: The client, {refreshTokenRequestDTO.ClientId}, is not found]");
                 // Client invalid or inactive; reject refresh
                 return null;
             }
             // Look up the refresh token in database, including related user and roles for new token generation
         
-            var existingToken = _tokenService.GetExistingToken(refreshToken, client.Id);
+            var existingToken = _tokenService.GetExistingToken(refreshTokenRequestDTO.RefreshToken, client.Id);
             
             // Validate refresh token existence, revocation status, and expiration
             if (existingToken == null || existingToken.IsRevoked || existingToken.Expires <= DateTime.UtcNow)
+            {
+                _logger.LogInformation("[User service | Refresh Token: existing token is null or is revoked or expired.]");
                 return null; // Invalid refresh token
+            }
             // Revoke old refresh token immediately to prevent reuse
             _tokenService.RevokeToken(existingToken);
 
             var user = existingToken.User;
-            if (user == null)
+            if (user == null) 
+            {
+                _logger.LogInformation("[User service | Refresh Token: user in existing token is null]");
                 return null;
-            var roles = Enum.GetNames(typeof(UserRoles)).ToList();
+            }
+            var userRoleName = RoleMappingEnum2String(user.Role);
+            var roles = new List<string>();
+            if (!string.IsNullOrEmpty(userRoleName)) roles.Add(userRoleName);
             // Generate a new access token with fresh JWT ID and client info
             var accessToken = _tokenService.GenerateAccessToken(user, roles, out string newJwtId, client);
             if (accessToken == null || accessToken == "")
+            {
+                _logger.LogInformation("[User service | Refresh Token: access Token is generated unsuccessfully.]");
                 return null;
+            }
             // Generate a new refresh token linked to the new JWT ID
             var newRefreshToken = _tokenService.GenerateRefreshToken(ipAddress, newJwtId, client, user.Id);
             if (newRefreshToken == null)
+            {
+                 _logger.LogInformation("[User service | Refresh Token: refresh Token is generated unsuccessfully.]");
+
                 return null;
+            }
             // Store the new refresh token in the database
             _tokenService.AddRefreshTokens(newRefreshToken);
             // Read access token expiration duration from config or default to 15 minutes
@@ -298,6 +334,7 @@ namespace AIBookingSystem.Services
                 AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(accessTokenExpiryMinutes)
             };
         }
+
         // Revokes an existing refresh token to prevent further use
         public bool RevokeRefreshToken(string refreshToken)
         {

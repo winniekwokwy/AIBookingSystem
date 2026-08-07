@@ -1,5 +1,6 @@
 using AIBookingSystem.DTO;
 using AIBookingSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AIBookingSystem.Controllers
@@ -21,11 +22,11 @@ namespace AIBookingSystem.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponseDTO>> Login(UserLoginDTO loginDto)
         {
-            _logger.LogInformation("[AuthController | Login ] reached");
+            // _logger.LogInformation("[AuthController | Login ] reached");
             // Validate input model (email, password, clientId)
             if (!ModelState.IsValid)
             {
-                 _logger.LogInformation("[AuthController | Login ] Invalid input.");
+                //  _logger.LogInformation("[AuthController | Login ] Invalid input.");
                 return BadRequest(ModelState); // Return 400 with validation errors
             }
             // Get client IP address for logging and refresh token generation
@@ -35,7 +36,7 @@ namespace AIBookingSystem.Controllers
                 return BadRequest("Invalid ip address.");
             }
 
-            _logger.LogInformation($"[AuthController | Login: ipAddress = {ipAddress} ]");
+            // _logger.LogInformation($"[AuthController | Login: ipAddress = {ipAddress} ]");
 
             // Call UserService to authenticate user and get JWT + refresh tokens
             var authResponse = await _userService.AuthenticateUser(loginDto, ipAddress);
@@ -43,7 +44,7 @@ namespace AIBookingSystem.Controllers
             if (authResponse == null)
             {
 
-                _logger.LogInformation($"[AuthController | Login: UserService authenticate user failure.]");
+                // _logger.LogInformation($"[AuthController | Login: UserService authenticate user failure.]");
                 return Unauthorized("Invalid credentials or client.");
             }
             // Successful login: return 200 OK with tokens and expiry info
@@ -52,18 +53,36 @@ namespace AIBookingSystem.Controllers
         // POST api/auth/refresh-token
         // Endpoint to obtain a new access token using a refresh token
         [HttpPost("refresh-token")]
+        [Authorize]
         public async Task<ActionResult<AuthResponseDTO>> RefreshToken(RefreshTokenRequestDTO refreshRequest)
         {
+            _logger.LogInformation("[AuthController | RefreshToken ] reached");
+
+            _logger.LogInformation($"[AuthController | RefreshToken: refreshToken = {refreshRequest.RefreshToken} ]");
+
+            _logger.LogInformation($"[AuthController | RefreshToken: clientId = {refreshRequest.ClientId} ]");
             // Validate input model (refreshToken and clientId required)
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid == false|| refreshRequest.RefreshToken == "" || refreshRequest.ClientId == "")
+            {
+                _logger.LogInformation("[AuthController | RefreshToken ] Invalid input.");
                 return BadRequest(ModelState); // Return 400 with validation errors
+            }
             // Get client IP address (optional for logging/auditing)
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            if (ipAddress == "unknown")
+            {
+                return BadRequest("Invalid ip address.");
+            }
+
+            _logger.LogInformation($"[AuthController | RefreshToken: ipAddress = {ipAddress} ]");
             // Call UserService to validate refresh token and issue new access & refresh tokens
-            var authResponse = await _userService.RefreshToken(refreshRequest.RefreshToken, refreshRequest.ClientId, ipAddress);
+            var authResponse = await _userService.RefreshToken(refreshRequest, ipAddress);
             // If refresh token or client is invalid, return 401 Unauthorized
             if (authResponse == null)
+            {
+                _logger.LogInformation($"[AuthController | RefreshToken: UserService refresh token failure.]");
                 return Unauthorized("Invalid refresh token or client." );
+            }
             // Successful token refresh: return 200 OK with new tokens and expiry info
             return Ok(authResponse);
         }

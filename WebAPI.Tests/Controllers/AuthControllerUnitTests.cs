@@ -176,7 +176,7 @@ namespace WebAPI.Tests.Controllers
                 AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(accessTokenExpiryMinutes)
             };
 
-            _mockUserService.Setup(s => s.RefreshToken(refreshTokenRequestDTO.RefreshToken, refreshTokenRequestDTO.ClientId, ipAddress))
+            _mockUserService.Setup(s => s.RefreshToken(refreshTokenRequestDTO, ipAddress))
                             .ReturnsAsync(authResponse);
 
             var authController = CreateController();
@@ -212,7 +212,7 @@ namespace WebAPI.Tests.Controllers
                 AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(accessTokenExpiryMinutes)
             };
 
-            _mockUserService.Setup(s => s.RefreshToken(refreshTokenRequestDTO.RefreshToken, refreshTokenRequestDTO.ClientId, ipAddress))
+            _mockUserService.Setup(s => s.RefreshToken(refreshTokenRequestDTO, ipAddress))
                             .ReturnsAsync((AuthResponseDTO?)null!);
 
             var authController = CreateController();

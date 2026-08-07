@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using AIBookingSystem.Repositories;
+using AIBookingSystem.DTO;
 
 namespace AIBookingSystem.Services
 {
@@ -122,6 +123,11 @@ namespace AIBookingSystem.Services
         public RefreshToken? GetExistingToken(string refreshToken)
         {
             return _tokenRepo.GetExistingToken(refreshToken);
+        }
+
+        public async Task<RefreshToken?> GetAccessTokenByJtiAsync(string jti)
+        {
+            return await _tokenRepo.GetAccessTokenByJtiAsync(jti);
         }
     }
 }

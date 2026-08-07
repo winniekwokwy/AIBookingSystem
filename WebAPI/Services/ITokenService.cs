@@ -14,5 +14,7 @@ namespace AIBookingSystem.Services
         void RevokeToken(RefreshToken token);
 
         RefreshToken? GetExistingToken(string refreshToken);
+
+        Task<RefreshToken?> GetAccessTokenByJtiAsync(string jti);
     }
 }

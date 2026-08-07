@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Services;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace AIBookingSystem.Controllers
 {
 
     [ApiController]
-    [Route("api/[controller]/[action]")]
+    [Route("api/[controller]/")]
     [Authorize]
     public class UserController : ControllerBase
     {
@@ -20,7 +21,7 @@ namespace AIBookingSystem.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
+        [HttpGet("users")]
         [Authorize(Roles = "Admin")]
         public ActionResult<IEnumerable<UserDTO>> ListUsers()
         {
@@ -35,7 +36,8 @@ namespace AIBookingSystem.Controllers
             return Ok(users);
         }
 
-        [HttpGet]
+        [HttpGet("get-user-by-id/{id}")]
+        [Authorize]
         public ActionResult<IEnumerable<UserDTO>> GetUserbyID(int id)
         {
             string message;
@@ -57,7 +59,8 @@ namespace AIBookingSystem.Controllers
             return NotFound(message);
         }
 
-        [HttpGet]
+        [HttpGet("get-user-by-username/{userName}")]
+        [Authorize]
         public ActionResult<IEnumerable<UserDTO>> GetUserbyUsername(string userName)
         {
             string message;
@@ -79,10 +82,13 @@ namespace AIBookingSystem.Controllers
             return NotFound(message);
         }
 
-        [HttpPost]
+        [HttpPost("create-user")]
         [Authorize(Roles = "Admin")]
-        public ActionResult<UserDTO> CreateUser([FromBody] UserCreateDTO createDto)
+        public ActionResult<UserDTO> CreateUser(UserCreateDTO createDto)
         {
+            var caller = User?.Identity?.Name ?? "<no-name>";
+            var callerRoles = User?.Claims?.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList() ?? new List<string>();
+            _logger.LogInformation($"CreateUser called by: {caller}; Roles: {string.Join(',', callerRoles)}");
             if (!ModelState.IsValid)
                 return BadRequest(ModelState); 
 

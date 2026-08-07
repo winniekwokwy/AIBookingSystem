@@ -19,11 +19,11 @@ namespace AIBookingSystem.IntegrationTests
         // Override ConfigureWebHost to customize the test server's service registrations.
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-
             builder.ConfigureLogging(logging =>
             {
                 logging.ClearProviders();
                 logging.AddProvider(LoggerProvider);
+                logging.AddConsole();
                 logging.SetMinimumLevel(LogLevel.Debug);
             });
 
@@ -32,20 +32,6 @@ namespace AIBookingSystem.IntegrationTests
             {
                 services.AddSingleton(LoggerProvider);
             });
-
-            // builder.Configure(app =>
-            // {
-            //     app.Use((RequestDelegate next) =>
-            //     {
-            //         return async context =>
-            //         {
-            //             context.Connection.RemoteIpAddress =
-            //                 IPAddress.Parse("203.0.113.10");
-
-            //             await next(context);
-            //         };
-            //     });
-            // });
 
             builder.UseEnvironment("Test");
             // ConfigureServices is used to modify the Dependency Injection (DI) container.

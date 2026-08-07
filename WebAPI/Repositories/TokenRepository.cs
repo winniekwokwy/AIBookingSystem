@@ -2,6 +2,7 @@ using AIBookingSystem.Data;
 using AIBookingSystem.DTO;
 using AIBookingSystem.Enums;
 using AIBookingSystem.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace AIBookingSystem.Repositories
 {
@@ -24,6 +25,7 @@ namespace AIBookingSystem.Repositories
         {
             // Look up the refresh token in database, including related user and roles for new token generation
             return _dBContext.RefreshTokens
+                .Include(rt => rt.User)
                 .FirstOrDefault(rt => rt.Token == refreshToken && rt.ClientId == clientId);
 
         }
@@ -50,6 +52,13 @@ namespace AIBookingSystem.Repositories
         public RefreshToken? GetExistingToken(string refreshToken)
         {
             return _dBContext.RefreshTokens.FirstOrDefault(rt => rt.Token == refreshToken);
+        }
+
+        public async Task<RefreshToken?> GetAccessTokenByJtiAsync(string jti)
+        {
+            return await _dBContext.RefreshTokens
+                .AsNoTracking()
+                .FirstOrDefaultAsync(rt => rt.JwtId == jti);
         }
     }
 }

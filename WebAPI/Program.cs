@@ -58,7 +58,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         ValidateIssuer = true, // Validate that token issuer matches expected issuer
         ValidIssuer = builder.Configuration["JwtSettings:Issuer"], // Expected issuer value
-        ValidateAudience = false, // Audience validated manually later
+        ValidateAudience = false, // Audience is validated manually later in OnTokenValidated
         ValidateIssuerSigningKey = true, // Validate the token's signing key
         ValidateLifetime = true, // Validate token expiration and not-before times
         // Dynamically obtains the signing key based on the client_id claim,
@@ -116,6 +116,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 // Fail if audience doesn't match
                 context.Fail("Invalid audience.");
                 return;
+            }
+
+            using (var scope = context.HttpContext.RequestServices
+                    .CreateScope())
+            {
+                var tokenService = scope.ServiceProvider
+                    .GetRequiredService<ITokenService>();
+
+                var jti = context.Principal?.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+                if (string.IsNullOrWhiteSpace(jti))
+                    return;
+
+                var tokenRecord = await tokenService.GetAccessTokenByJtiAsync(jti);
+
+                if (tokenRecord != null && tokenRecord.IsRevoked)
+                {
+                    context.Fail("Token revoked.");
+                    return;
+                }
             }
         }
     };
